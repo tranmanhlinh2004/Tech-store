@@ -1,0 +1,1121 @@
+1. Tổng quan đề tài
+Tên đề tài đề xuất
+
+Xây dựng website bán đồ công nghệ bằng Laravel và MySQL
+
+Hoặc viết trang trọng hơn:
+
+Xây dựng hệ thống website thương mại điện tử bán thiết bị công nghệ sử dụng Laravel Framework
+
+Mục tiêu của hệ thống
+
+Website cho phép khách hàng truy cập để xem, tìm kiếm, lọc, chọn mua các sản phẩm công nghệ như:
+
+Điện thoại
+Laptop
+Tai nghe
+Bàn phím
+Chuột
+Màn hình
+Linh kiện máy tính
+Phụ kiện công nghệ
+
+Hệ thống cũng cho phép quản trị viên quản lý toàn bộ dữ liệu của shop như sản phẩm, danh mục, đơn hàng, khách hàng, nhân viên, mã giảm giá, banner, tin tức và thống kê doanh thu.
+
+2. Các nhóm người dùng trong hệ thống
+
+Hệ thống nên chia tối thiểu thành 3 nhóm chính.
+
+2.1. Khách vãng lai
+
+Là người chưa đăng nhập.
+
+Có thể:
+
+Xem trang chủ
+Xem danh sách sản phẩm
+Xem chi tiết sản phẩm
+Tìm kiếm sản phẩm
+Lọc sản phẩm theo danh mục, giá, thương hiệu
+Đăng ký tài khoản
+Đăng nhập
+
+Có thể cho phép thêm vào giỏ hàng trước khi đăng nhập, nhưng khi thanh toán thì bắt buộc đăng nhập hoặc nhập thông tin mua hàng.
+
+2.2. Khách hàng đã đăng nhập
+
+Là người có tài khoản trong hệ thống.
+
+Có thể:
+
+Cập nhật thông tin cá nhân
+Quản lý địa chỉ nhận hàng
+Thêm sản phẩm vào giỏ hàng
+Đặt hàng
+Áp dụng mã giảm giá
+Theo dõi trạng thái đơn hàng
+Xem lịch sử mua hàng
+Hủy đơn hàng khi đơn chưa xử lý
+Đánh giá sản phẩm sau khi mua
+Đổi mật khẩu
+Đăng xuất
+2.3. Quản trị viên / nhân viên shop
+
+Là người quản lý hệ thống từ trang admin.
+
+Có thể:
+
+Quản lý tài khoản người dùng
+Quản lý vai trò, quyền hạn
+Quản lý danh mục sản phẩm
+Quản lý thương hiệu
+Quản lý sản phẩm
+Quản lý ảnh sản phẩm
+Quản lý tồn kho
+Quản lý đơn hàng
+Cập nhật trạng thái đơn hàng
+Quản lý thanh toán
+Quản lý mã giảm giá
+Quản lý banner
+Quản lý tin tức
+Quản lý đánh giá
+Xem thống kê doanh thu
+Xem sản phẩm bán chạy
+Xem đơn hàng mới
+3. Phạm vi chức năng của website
+
+Anh có thể chia hệ thống thành 2 phần lớn:
+
+Phía người dùng / khách hàng
+Phía quản trị / admin
+4. Chức năng phía khách hàng
+4.1. Trang chủ
+
+Trang chủ là nơi giới thiệu tổng quan về shop.
+
+Nên có:
+
+Banner khuyến mãi
+Danh mục sản phẩm nổi bật
+Sản phẩm mới nhất
+Sản phẩm bán chạy
+Sản phẩm đang giảm giá
+Tin tức công nghệ
+Footer thông tin liên hệ
+
+Ví dụ nội dung trang chủ:
+
+“Laptop gaming bán chạy”
+“Điện thoại mới về”
+“Phụ kiện giảm giá”
+“Sản phẩm nổi bật trong tuần”
+4.2. Xem danh sách sản phẩm
+
+Khách hàng có thể xem toàn bộ sản phẩm trong shop.
+
+Mỗi sản phẩm nên hiển thị:
+
+Hình ảnh
+Tên sản phẩm
+Giá bán
+Giá khuyến mãi nếu có
+Thương hiệu
+Tình trạng còn hàng / hết hàng
+Nút xem chi tiết
+Nút thêm vào giỏ hàng
+4.3. Tìm kiếm sản phẩm
+
+Người dùng có thể tìm kiếm theo:
+
+Tên sản phẩm
+Mã sản phẩm
+Thương hiệu
+Danh mục
+
+Ví dụ:
+
+“iPhone”
+“Laptop Asus”
+“Chuột gaming”
+“Tai nghe Bluetooth”
+4.4. Lọc và sắp xếp sản phẩm
+
+Đây là chức năng rất nên có để đồ án nhìn chuyên nghiệp.
+
+Có thể lọc theo:
+
+Danh mục
+Thương hiệu
+Khoảng giá
+Tình trạng hàng
+Sản phẩm giảm giá
+Sản phẩm mới
+
+Có thể sắp xếp theo:
+
+Giá tăng dần
+Giá giảm dần
+Mới nhất
+Bán chạy
+Đánh giá cao
+4.5. Xem chi tiết sản phẩm
+
+Trang chi tiết sản phẩm nên có:
+
+Tên sản phẩm
+Ảnh chính
+Danh sách ảnh phụ
+Giá bán
+Giá khuyến mãi
+Mô tả ngắn
+Mô tả chi tiết
+Thông số kỹ thuật
+Số lượng còn lại
+Thương hiệu
+Danh mục
+Chính sách bảo hành
+Nút thêm vào giỏ hàng
+Đánh giá của khách hàng
+Sản phẩm liên quan
+
+Ví dụ với laptop:
+
+CPU
+RAM
+Ổ cứng
+Card đồ họa
+Màn hình
+Hệ điều hành
+Bảo hành
+4.6. Giỏ hàng
+
+Khách hàng có thể:
+
+Thêm sản phẩm vào giỏ hàng
+Xem danh sách sản phẩm trong giỏ
+Tăng / giảm số lượng
+Xóa sản phẩm khỏi giỏ
+Xem tổng tiền
+Áp dụng mã giảm giá
+Chuyển sang thanh toán
+
+Thông tin trong giỏ hàng gồm:
+
+Tên sản phẩm
+Ảnh sản phẩm
+Giá
+Số lượng
+Thành tiền
+Tổng tiền đơn hàng
+4.7. Đặt hàng / checkout
+
+Khi khách hàng thanh toán, hệ thống cần lấy thông tin:
+
+Họ tên người nhận
+Số điện thoại
+Email
+Địa chỉ giao hàng
+Ghi chú đơn hàng
+Phương thức thanh toán
+Phương thức vận chuyển nếu có
+
+Sau khi đặt hàng thành công:
+
+Tạo đơn hàng mới
+Tạo chi tiết đơn hàng
+Trừ số lượng tồn kho
+Lưu thông tin thanh toán
+Hiển thị thông báo đặt hàng thành công
+4.8. Thanh toán
+
+Với đồ án, anh có thể làm từ đơn giản đến nâng cao.
+
+Mức cơ bản
+Thanh toán khi nhận hàng, tức COD
+Chuyển khoản ngân hàng
+Thanh toán tại cửa hàng
+Mức nâng cao
+
+Có thể tích hợp:
+
+VNPay
+MoMo
+ZaloPay
+PayPal
+
+Nếu thời gian ít, anh nên làm COD + chuyển khoản trước. Sau đó nếu còn thời gian thì thêm VNPay để đồ án đẹp hơn.
+
+4.9. Theo dõi đơn hàng
+
+Khách hàng có thể xem đơn hàng của mình.
+
+Trạng thái đơn hàng có thể gồm:
+
+Chờ xác nhận
+Đã xác nhận
+Đang chuẩn bị hàng
+Đang giao hàng
+Giao hàng thành công
+Đã hủy
+
+Khách hàng nên được phép hủy đơn nếu đơn còn ở trạng thái chờ xác nhận.
+
+4.10. Đánh giá sản phẩm
+
+Sau khi đơn hàng hoàn thành, khách hàng có thể đánh giá sản phẩm.
+
+Thông tin đánh giá gồm:
+
+Số sao
+Nội dung đánh giá
+Ảnh đánh giá nếu muốn làm nâng cao
+Ngày đánh giá
+
+Quản trị viên có thể ẩn hoặc xóa đánh giá không phù hợp.
+
+4.11. Tài khoản khách hàng
+
+Khách hàng có thể quản lý tài khoản:
+
+Xem thông tin cá nhân
+Cập nhật họ tên
+Cập nhật số điện thoại
+Cập nhật địa chỉ
+Đổi mật khẩu
+Xem lịch sử mua hàng
+5. Chức năng phía quản trị
+5.1. Dashboard quản trị
+
+Trang dashboard nên hiển thị nhanh:
+
+Tổng số sản phẩm
+Tổng số khách hàng
+Tổng số đơn hàng
+Tổng doanh thu
+Đơn hàng mới
+Doanh thu theo ngày / tháng
+Sản phẩm bán chạy
+Sản phẩm sắp hết hàng
+
+Đây là phần giúp đồ án trông hoàn chỉnh hơn rất nhiều.
+
+5.2. Quản lý danh mục sản phẩm
+
+Ví dụ danh mục:
+
+Điện thoại
+Laptop
+Máy tính bảng
+Tai nghe
+Bàn phím
+Chuột
+Màn hình
+Linh kiện PC
+Phụ kiện
+
+Chức năng:
+
+Thêm danh mục
+Sửa danh mục
+Xóa danh mục
+Ẩn / hiện danh mục
+Phân cấp danh mục cha - con nếu muốn làm nâng cao
+5.3. Quản lý thương hiệu
+
+Ví dụ thương hiệu:
+
+Apple
+Samsung
+Asus
+Dell
+HP
+Lenovo
+Logitech
+Sony
+MSI
+Acer
+
+Chức năng:
+
+Thêm thương hiệu
+Sửa thương hiệu
+Xóa thương hiệu
+Hiển thị logo thương hiệu nếu muốn
+5.4. Quản lý sản phẩm
+
+Đây là chức năng quan trọng nhất.
+
+Thông tin sản phẩm nên có:
+
+Mã sản phẩm
+Tên sản phẩm
+Danh mục
+Thương hiệu
+Giá nhập
+Giá bán
+Giá khuyến mãi
+Số lượng tồn kho
+Ảnh đại diện
+Mô tả ngắn
+Mô tả chi tiết
+Thông số kỹ thuật
+Trạng thái sản phẩm
+Bảo hành
+Ngày tạo
+Ngày cập nhật
+
+Chức năng:
+
+Thêm sản phẩm
+Sửa sản phẩm
+Xóa sản phẩm
+Xem chi tiết sản phẩm
+Upload ảnh sản phẩm
+Ẩn / hiện sản phẩm
+Cập nhật tồn kho
+Tìm kiếm sản phẩm trong admin
+5.5. Quản lý ảnh sản phẩm
+
+Một sản phẩm thường có nhiều ảnh.
+
+Ví dụ:
+
+Ảnh mặt trước
+Ảnh mặt sau
+Ảnh chi tiết
+Ảnh hộp sản phẩm
+
+Nên tách bảng ảnh riêng để dễ quản lý.
+
+5.6. Quản lý thông số kỹ thuật
+
+Với shop đồ công nghệ, thông số kỹ thuật rất quan trọng.
+
+Có 2 cách làm:
+
+Cách đơn giản
+
+Lưu thông số trong một cột dạng text hoặc JSON.
+
+Ví dụ:
+
+CPU: Intel Core i5
+RAM: 16GB
+SSD: 512GB
+Màn hình: 15.6 inch
+Card: RTX 3050
+Cách chuyên nghiệp hơn
+
+Tạo bảng riêng cho thông số kỹ thuật.
+
+Ví dụ:
+
+product_specifications
+specification_name
+specification_value
+
+Cách này đẹp hơn, dễ hiển thị hơn và đúng chất đồ án hơn.
+
+5.7. Quản lý đơn hàng
+
+Admin có thể:
+
+Xem danh sách đơn hàng
+Xem chi tiết đơn hàng
+Tìm kiếm đơn hàng
+Lọc theo trạng thái
+Cập nhật trạng thái đơn hàng
+Hủy đơn hàng
+In hóa đơn nếu muốn làm nâng cao
+
+Thông tin đơn hàng gồm:
+
+Mã đơn hàng
+Khách hàng
+Người nhận
+Số điện thoại
+Địa chỉ giao hàng
+Tổng tiền hàng
+Giảm giá
+Phí vận chuyển
+Tổng thanh toán
+Trạng thái đơn hàng
+Trạng thái thanh toán
+Ngày đặt hàng
+5.8. Quản lý chi tiết đơn hàng
+
+Mỗi đơn hàng gồm nhiều sản phẩm.
+
+Chi tiết đơn hàng cần lưu:
+
+Đơn hàng nào
+Sản phẩm nào
+Tên sản phẩm tại thời điểm mua
+Giá tại thời điểm mua
+Số lượng
+Thành tiền
+
+Lưu ý: nên lưu lại tên sản phẩm và giá tại thời điểm đặt hàng, vì sau này sản phẩm có thể đổi tên hoặc đổi giá.
+
+5.9. Quản lý thanh toán
+
+Thông tin thanh toán gồm:
+
+Đơn hàng
+Phương thức thanh toán
+Trạng thái thanh toán
+Số tiền thanh toán
+Mã giao dịch nếu có
+Thời gian thanh toán
+
+Trạng thái thanh toán:
+
+Chưa thanh toán
+Đã thanh toán
+Thanh toán thất bại
+Đã hoàn tiền
+5.10. Quản lý mã giảm giá
+
+Mã giảm giá giúp hệ thống giống shop thật hơn.
+
+Thông tin voucher gồm:
+
+Mã voucher
+Tên chương trình
+Loại giảm giá
+Giá trị giảm
+Số lượng mã
+Giá trị đơn hàng tối thiểu
+Ngày bắt đầu
+Ngày kết thúc
+Trạng thái
+
+Loại giảm giá:
+
+Giảm theo phần trăm
+Giảm theo số tiền cố định
+
+Ví dụ:
+
+TECH10 giảm 10%
+LAPTOP500 giảm 500.000đ
+FREESHIP giảm phí vận chuyển
+5.11. Quản lý banner
+
+Banner dùng cho trang chủ.
+
+Thông tin banner gồm:
+
+Tiêu đề
+Hình ảnh
+Đường dẫn
+Vị trí hiển thị
+Trạng thái
+Thứ tự hiển thị
+
+Ví dụ:
+
+Banner khuyến mãi laptop
+Banner iPhone mới
+Banner phụ kiện giảm giá
+5.12. Quản lý tin tức
+
+Website bán đồ công nghệ có thể thêm phần tin tức để chuyên nghiệp hơn.
+
+Ví dụ:
+
+Đánh giá laptop gaming 2026
+Top điện thoại đáng mua
+Cách chọn chuột gaming
+So sánh iPhone và Samsung
+
+Chức năng:
+
+Thêm bài viết
+Sửa bài viết
+Xóa bài viết
+Ẩn / hiện bài viết
+Upload ảnh đại diện
+5.13. Quản lý đánh giá sản phẩm
+
+Admin có thể:
+
+Xem đánh giá
+Ẩn đánh giá
+Xóa đánh giá
+Phản hồi đánh giá nếu muốn
+5.14. Quản lý người dùng
+
+Admin có thể:
+
+Xem danh sách khách hàng
+Khóa tài khoản
+Mở khóa tài khoản
+Xem lịch sử mua hàng của khách
+
+Nếu làm phân quyền nâng cao thì có thêm:
+
+Quản lý admin
+Quản lý nhân viên
+Quản lý vai trò
+Quản lý quyền
+6. Các bảng dữ liệu nên có
+
+Với đồ án này, em đề xuất database gồm các bảng sau:
+
+Nhóm tài khoản và phân quyền
+roles
+permissions
+role_permissions
+users
+Nhóm sản phẩm
+categories
+brands
+products
+product_images
+product_specifications
+Nhóm giỏ hàng và đơn hàng
+carts
+cart_items
+orders
+order_items
+payments
+Nhóm khuyến mãi
+coupons
+coupon_usages
+Nhóm đánh giá
+reviews
+Nhóm nội dung website
+banners
+news
+contacts
+Nhóm mở rộng
+shipping_addresses
+wishlists
+inventory_logs
+audit_logs
+7. Gợi ý chi tiết từng bảng
+7.1. Bảng roles
+
+Dùng để lưu vai trò người dùng.
+
+Ví dụ:
+
+Admin
+Staff
+Customer
+
+Các cột nên có:
+
+id
+name
+description
+created_at
+updated_at
+7.2. Bảng permissions
+
+Dùng để lưu quyền thao tác.
+
+Ví dụ:
+
+manage_products
+manage_orders
+manage_users
+manage_banners
+view_reports
+
+Các cột:
+
+id
+name
+description
+created_at
+updated_at
+7.3. Bảng role_permissions
+
+Bảng trung gian giữa vai trò và quyền.
+
+Các cột:
+
+id
+role_id
+permission_id
+created_at
+updated_at
+7.4. Bảng users
+
+Dùng để lưu tài khoản người dùng.
+
+Các cột:
+
+id
+role_id
+name
+email
+phone
+password
+avatar
+status
+email_verified_at
+remember_token
+created_at
+updated_at
+
+Trạng thái tài khoản:
+
+active
+blocked
+7.5. Bảng categories
+
+Dùng để lưu danh mục sản phẩm.
+
+Các cột:
+
+id
+parent_id
+name
+slug
+description
+image
+status
+created_at
+updated_at
+
+parent_id dùng khi muốn làm danh mục cha - con.
+
+Ví dụ:
+
+Laptop
+Laptop gaming
+Laptop văn phòng
+Phụ kiện
+Chuột
+Bàn phím
+Tai nghe
+7.6. Bảng brands
+
+Dùng để lưu thương hiệu.
+
+Các cột:
+
+id
+name
+slug
+logo
+description
+status
+created_at
+updated_at
+7.7. Bảng products
+
+Dùng để lưu sản phẩm.
+
+Các cột:
+
+id
+category_id
+brand_id
+name
+slug
+sku
+short_description
+description
+import_price
+price
+sale_price
+quantity
+warranty_months
+thumbnail
+status
+is_featured
+created_at
+updated_at
+
+Trạng thái sản phẩm:
+
+active
+inactive
+out_of_stock
+7.8. Bảng product_images
+
+Dùng để lưu nhiều ảnh cho một sản phẩm.
+
+Các cột:
+
+id
+product_id
+image_path
+is_main
+sort_order
+created_at
+updated_at
+7.9. Bảng product_specifications
+
+Dùng để lưu thông số kỹ thuật của sản phẩm.
+
+Các cột:
+
+id
+product_id
+spec_name
+spec_value
+sort_order
+created_at
+updated_at
+
+Ví dụ:
+
+spec_name	spec_value
+CPU	Intel Core i5-12450H
+RAM	16GB DDR4
+SSD	512GB
+Màn hình	15.6 inch Full HD
+Bảo hành	24 tháng
+7.10. Bảng carts
+
+Dùng để lưu giỏ hàng của người dùng.
+
+Các cột:
+
+id
+user_id
+created_at
+updated_at
+7.11. Bảng cart_items
+
+Dùng để lưu sản phẩm trong giỏ hàng.
+
+Các cột:
+
+id
+cart_id
+product_id
+quantity
+price
+created_at
+updated_at
+7.12. Bảng orders
+
+Dùng để lưu đơn hàng.
+
+Các cột:
+
+id
+user_id
+order_code
+customer_name
+customer_email
+customer_phone
+shipping_address
+note
+subtotal
+discount_amount
+shipping_fee
+total_amount
+order_status
+payment_status
+created_at
+updated_at
+
+Trạng thái đơn hàng:
+
+pending: chờ xác nhận
+confirmed: đã xác nhận
+processing: đang xử lý
+shipping: đang giao
+completed: hoàn thành
+cancelled: đã hủy
+7.13. Bảng order_items
+
+Dùng để lưu chi tiết đơn hàng.
+
+Các cột:
+
+id
+order_id
+product_id
+product_name
+product_image
+price
+quantity
+total
+created_at
+updated_at
+7.14. Bảng payments
+
+Dùng để lưu thông tin thanh toán.
+
+Các cột:
+
+id
+order_id
+payment_method
+payment_status
+amount
+transaction_code
+paid_at
+created_at
+updated_at
+
+Phương thức thanh toán:
+
+COD
+Bank Transfer
+VNPay
+MoMo
+7.15. Bảng coupons
+
+Dùng để lưu mã giảm giá.
+
+Các cột:
+
+id
+code
+name
+discount_type
+discount_value
+min_order_value
+max_discount_amount
+quantity
+used_count
+start_date
+end_date
+status
+created_at
+updated_at
+7.16. Bảng coupon_usages
+
+Dùng để lưu lịch sử sử dụng mã giảm giá.
+
+Các cột:
+
+id
+coupon_id
+user_id
+order_id
+used_at
+created_at
+updated_at
+7.17. Bảng reviews
+
+Dùng để lưu đánh giá sản phẩm.
+
+Các cột:
+
+id
+user_id
+product_id
+order_id
+rating
+comment
+status
+created_at
+updated_at
+7.18. Bảng banners
+
+Dùng để lưu banner quảng cáo.
+
+Các cột:
+
+id
+title
+image
+link
+position
+sort_order
+status
+created_at
+updated_at
+7.19. Bảng news
+
+Dùng để lưu bài viết tin tức.
+
+Các cột:
+
+id
+user_id
+title
+slug
+thumbnail
+summary
+content
+status
+created_at
+updated_at
+7.20. Bảng contacts
+
+Dùng để lưu liên hệ/góp ý của khách hàng.
+
+Các cột:
+
+id
+name
+email
+phone
+subject
+message
+status
+created_at
+updated_at
+8. Quan hệ giữa các bảng
+
+Các quan hệ chính:
+
+Một role có nhiều users
+Một role có nhiều permissions thông qua role_permissions
+Một category có nhiều products
+Một brand có nhiều products
+Một product có nhiều product_images
+Một product có nhiều product_specifications
+Một user có một hoặc nhiều orders
+Một order có nhiều order_items
+Một product xuất hiện trong nhiều order_items
+Một order có một payment
+Một user có một cart
+Một cart có nhiều cart_items
+Một coupon có nhiều coupon_usages
+Một product có nhiều reviews
+Một user có nhiều reviews
+9. Luồng nghiệp vụ chính của hệ thống
+9.1. Luồng mua hàng của khách hàng
+
+Quy trình chuẩn:
+
+Khách hàng vào website
+Xem danh sách sản phẩm
+Tìm kiếm hoặc lọc sản phẩm
+Xem chi tiết sản phẩm
+Thêm sản phẩm vào giỏ hàng
+Kiểm tra giỏ hàng
+Nhập thông tin giao hàng
+Chọn phương thức thanh toán
+Xác nhận đặt hàng
+Hệ thống tạo đơn hàng
+Hệ thống lưu chi tiết đơn hàng
+Hệ thống trừ tồn kho
+Khách hàng theo dõi trạng thái đơn hàng
+Sau khi nhận hàng, khách hàng có thể đánh giá sản phẩm
+9.2. Luồng xử lý đơn hàng của admin
+Admin đăng nhập trang quản trị
+Vào danh sách đơn hàng
+Xem đơn hàng mới
+Kiểm tra thông tin khách hàng
+Kiểm tra sản phẩm trong đơn
+Xác nhận đơn hàng
+Cập nhật trạng thái sang đang xử lý
+Chuẩn bị hàng
+Cập nhật trạng thái đang giao
+Khi giao thành công, cập nhật hoàn thành
+Nếu có lỗi, admin có thể hủy đơn
+9.3. Luồng quản lý sản phẩm
+Admin đăng nhập
+Vào quản lý sản phẩm
+Thêm danh mục nếu chưa có
+Thêm thương hiệu nếu chưa có
+Thêm sản phẩm mới
+Upload ảnh
+Nhập thông số kỹ thuật
+Nhập giá và số lượng
+Lưu sản phẩm
+Sản phẩm hiển thị ra trang khách hàng
+9.4. Luồng áp dụng mã giảm giá
+Khách hàng vào giỏ hàng
+Nhập mã giảm giá
+Hệ thống kiểm tra mã có tồn tại không
+Kiểm tra mã còn hạn không
+Kiểm tra mã còn số lượng không
+Kiểm tra đơn hàng có đạt giá trị tối thiểu không
+Tính số tiền được giảm
+Cập nhật tổng tiền thanh toán
+Khi đặt hàng thành công, lưu lịch sử sử dụng mã
+10. Các trang giao diện nên có
+Phía khách hàng
+Trang chủ
+Trang danh sách sản phẩm
+Trang chi tiết sản phẩm
+Trang tìm kiếm
+Trang giỏ hàng
+Trang thanh toán
+Trang đăng nhập
+Trang đăng ký
+Trang quên mật khẩu
+Trang tài khoản cá nhân
+Trang lịch sử đơn hàng
+Trang chi tiết đơn hàng
+Trang tin tức
+Trang chi tiết tin tức
+Trang liên hệ
+Trang giới thiệu
+Phía admin
+Trang đăng nhập admin
+Dashboard
+Quản lý danh mục
+Quản lý thương hiệu
+Quản lý sản phẩm
+Quản lý ảnh sản phẩm
+Quản lý đơn hàng
+Quản lý khách hàng
+Quản lý mã giảm giá
+Quản lý banner
+Quản lý tin tức
+Quản lý đánh giá
+Thống kê doanh thu
+Quản lý vai trò/quyền nếu làm nâng cao
+11. Chức năng nên chia theo mức độ
+
+Để làm đồ án không bị quá tải, anh nên chia thành 3 mức.
+
+Mức bắt buộc phải có
+Đăng ký, đăng nhập, đăng xuất
+Xem sản phẩm
+Tìm kiếm sản phẩm
+Xem chi tiết sản phẩm
+Giỏ hàng
+Đặt hàng
+Quản lý sản phẩm
+Quản lý danh mục
+Quản lý đơn hàng
+Quản lý người dùng
+Dashboard admin đơn giản
+Mức nên có
+Thương hiệu sản phẩm
+Ảnh phụ sản phẩm
+Mã giảm giá
+Đánh giá sản phẩm
+Lọc sản phẩm
+Theo dõi trạng thái đơn hàng
+Banner trang chủ
+Tin tức công nghệ
+Mức nâng cao
+Phân quyền chi tiết
+Thanh toán VNPay/MoMo
+Quản lý tồn kho nâng cao
+Biểu đồ doanh thu
+Gửi email xác nhận đơn hàng
+Quên mật khẩu qua email
+Yêu thích sản phẩm
+So sánh sản phẩm
+Chat hỗ trợ khách hàng
+Xuất hóa đơn PDF
+12. Công nghệ sử dụng
+Backend
+PHP
+Laravel Framework
+Laravel Blade hoặc Laravel API
+Laravel Eloquent ORM
+Laravel Migration
+Laravel Seeder
+Laravel Middleware
+Laravel Validation
+Laravel Auth
+Database
+MySQL
+Frontend
+
+Có thể dùng:
+
+HTML
+CSS
+JavaScript
+Bootstrap
+jQuery nếu cần
