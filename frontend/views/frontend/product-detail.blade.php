@@ -1,7 +1,15 @@
 @extends('frontend.layouts.tech')
 
-@section('title', 'ROG Strix G16 | Đồ Công Nghệ')
-@section('meta_description', 'Chi tiết sản phẩm Asus ROG Strix G16 tại Đồ Công Nghệ.')
+@section('title', $product->name.' | Đồ Công Nghệ')
+@section('meta_description', $product->short_description ?: 'Chi tiết sản phẩm '.$product->name.' tại Đồ Công Nghệ.')
+
+@php
+    $formatPrice = fn ($value) => number_format((float) $value, 0, ',', '.').'đ';
+    $fallbackImage = 'template/images/product/electronic/product1.jpg';
+    $displayPrice = $product->sale_price ?: $product->price;
+    $hasDiscount = $product->sale_price !== null && (float) $product->sale_price < (float) $product->price;
+    $mainImage = $images->firstWhere('is_main', 1)?->image_path ?? $images->first()?->image_path ?? $product->thumbnail ?? $fallbackImage;
+@endphp
 
 @section('content')
     <section class="page-hero page-hero--compact">
@@ -10,11 +18,15 @@
                 <a href="{{ route('frontend.home') }}">Trang chủ</a>
                 <i class="fas fa-chevron-right"></i>
                 <a href="{{ route('frontend.shop') }}">Sản phẩm</a>
+                @if ($product->category_name)
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="{{ route('frontend.shop', ['category' => $product->category_id]) }}">{{ $product->category_name }}</a>
+                @endif
                 <i class="fas fa-chevron-right"></i>
-                <span>ROG Strix G16</span>
+                <span>{{ $product->name }}</span>
             </div>
-            <h1>Asus ROG Strix G16</h1>
-            <p>Laptop gaming hiệu năng cao cho esports, đồ họa và học tập kỹ thuật.</p>
+            <h1>{{ $product->name }}</h1>
+            <p>{{ $product->short_description ?: 'Thông tin chi tiết, giá bán, bảo hành và cấu hình sản phẩm.' }}</p>
         </div>
     </section>
 
@@ -22,46 +34,44 @@
         <div class="site-container detail-grid">
             <div class="gallery-card">
                 <div class="gallery-main">
-                    <img src="{{ asset('template/images/product/gaming-laptop/asus-rog-strix-g16.jpg') }}" alt="Asus ROG Strix G16">
+                    <img src="{{ asset($mainImage) }}" alt="{{ $product->name }}">
                 </div>
+
                 <div class="thumb-row">
-                    <img src="{{ asset('template/images/product/gaming-laptop/asus-rog-strix-g16.jpg') }}" alt="Góc nhìn ROG Strix G16">
-                    <img src="{{ asset('template/images/product/gaming-laptop/msi-katana-15-b13v.png') }}" alt="Laptop gaming MSI">
-                    <img src="{{ asset('template/images/product/gaming-laptop/lenovo-legion-5-pro.jpg') }}" alt="Laptop gaming Lenovo">
-                    <img src="{{ asset('template/images/product/monitor/lg-ultragear-27gp850.jpg') }}" alt="Màn hình gaming">
+                    @forelse ($images as $image)
+                        <img src="{{ asset($image->image_path) }}" alt="{{ $product->name }}">
+                    @empty
+                        <img src="{{ asset($product->thumbnail ?: $fallbackImage) }}" alt="{{ $product->name }}">
+                    @endforelse
                 </div>
             </div>
 
             <aside class="purchase-card">
                 <div class="rating-row">
                     <span><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i></span>
-                    <span class="muted">4.8 · 126 đánh giá</span>
+                    <span class="muted">SKU: {{ $product->sku }}</span>
                 </div>
-                <h2>ROG Strix G16 Core i7 RTX 4060</h2>
-                <p class="muted">Màn hình tần số quét cao, tản nhiệt tốt, phù hợp chơi game, dựng video và chạy phần mềm kỹ thuật.</p>
+
+                <h2>{{ $product->name }}</h2>
+                <p class="muted">{{ $product->description ?: $product->short_description }}</p>
+
                 <div class="price-row">
-                    <strong>32.990.000đ</strong>
-                    <del>34.990.000đ</del>
+                    <strong>{{ $formatPrice($displayPrice) }}</strong>
+                    @if ($hasDiscount)
+                        <del>{{ $formatPrice($product->price) }}</del>
+                    @endif
                 </div>
 
-                <strong>Cấu hình</strong>
-                <div class="choice-row">
-                    <span>Core i7</span>
-                    <span>RTX 4060</span>
-                    <span>16GB RAM</span>
-                    <span>512GB SSD</span>
+                <div class="product-meta-list">
+                    <div><span>Danh mục</span><strong>{{ $product->category_name ?? 'Chưa phân loại' }}</strong></div>
+                    <div><span>Thương hiệu</span><strong>{{ $product->brand_name ?? 'Đồ Công Nghệ' }}</strong></div>
+                    <div><span>Tồn kho</span><strong>{{ $product->quantity }} sản phẩm</strong></div>
+                    <div><span>Bảo hành</span><strong>{{ $product->warranty_months }} tháng</strong></div>
                 </div>
 
-                <div class="hero__actions">
+                <div class="hero__actions u-m-t-20">
                     <a class="primary-action" href="{{ route('frontend.cart') }}"><i class="fas fa-shopping-cart"></i> Thêm vào giỏ</a>
                     <a class="secondary-action" href="{{ route('frontend.checkout') }}">Mua ngay</a>
-                </div>
-
-                <div class="spec-grid u-m-t-18">
-                    <div><span>Bảo hành</span><strong>24 tháng</strong></div>
-                    <div><span>Tình trạng</span><strong>Còn hàng</strong></div>
-                    <div><span>Giao hàng</span><strong>Trong ngày</strong></div>
-                    <div><span>Trả góp</span><strong>0%</strong></div>
                 </div>
             </aside>
         </div>
@@ -71,21 +81,72 @@
         <div class="site-container content-grid">
             <div class="info-card">
                 <h2 class="panel-title">Mô tả sản phẩm</h2>
-                <p class="muted">ROG Strix G16 là lựa chọn cân bằng cho người dùng cần hiệu năng mạnh, màn hình mượt và hệ thống tản nhiệt ổn định. Thiết kế phù hợp cả gaming lẫn công việc đồ họa.</p>
-                <ul class="feature-list">
-                    <li><i class="fas fa-check"></i> GPU RTX 4060 đáp ứng tốt game phổ biến và phần mềm dựng hình.</li>
-                    <li><i class="fas fa-check"></i> Màn hình tần số quét cao giúp thao tác mượt và giảm nhòe chuyển động.</li>
-                    <li><i class="fas fa-check"></i> Hỗ trợ nâng cấp RAM, SSD theo nhu cầu sử dụng lâu dài.</li>
-                </ul>
+                <p class="muted">{{ $product->description ?: $product->short_description ?: 'Sản phẩm đang được cập nhật mô tả chi tiết.' }}</p>
+
+                @if ($specifications->isNotEmpty())
+                    <h3 class="panel-title u-m-t-20">Thông số kỹ thuật</h3>
+                    <div class="spec-grid">
+                        @foreach ($specifications as $specification)
+                            <div>
+                                <span>{{ $specification->spec_name }}</span>
+                                <strong>{{ $specification->spec_value }}</strong>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
             </div>
+
             <aside class="summary-card">
                 <h2 class="panel-title">Dịch vụ đi kèm</h2>
                 <div class="summary-list">
-                    <div><span>Cài Windows, Office</span><strong>Miễn phí</strong></div>
-                    <div><span>Vệ sinh lần đầu</span><strong>Miễn phí</strong></div>
+                    <div><span>Cài đặt cơ bản</span><strong>Miễn phí</strong></div>
                     <div><span>Đổi trả lỗi phần cứng</span><strong>7 ngày</strong></div>
+                    <div><span>Giao nội thành</span><strong>Trong ngày</strong></div>
                 </div>
             </aside>
         </div>
     </section>
+
+    @if ($relatedProducts->isNotEmpty())
+        <section class="inner-section">
+            <div class="site-container">
+                <div class="section-heading">
+                    <span>Cùng danh mục</span>
+                    <h2>Sản phẩm liên quan</h2>
+                    <a href="{{ route('frontend.shop', ['category' => $product->category_id]) }}">Xem thêm <i class="fas fa-arrow-right"></i></a>
+                </div>
+
+                <div class="product-grid">
+                    @foreach ($relatedProducts as $relatedProduct)
+                        @php
+                            $relatedPrice = $relatedProduct->sale_price ?: $relatedProduct->price;
+                            $relatedDiscount = $relatedProduct->sale_price !== null && (float) $relatedProduct->sale_price < (float) $relatedProduct->price;
+                        @endphp
+
+                        <article class="product-card">
+                            <a class="product-card__media" href="{{ route('frontend.product', $relatedProduct->id) }}">
+                                <img src="{{ asset($relatedProduct->thumbnail ?: $fallbackImage) }}" alt="{{ $relatedProduct->name }}">
+                                <span>{{ $relatedDiscount ? 'Sale' : 'Gợi ý' }}</span>
+                            </a>
+                            <div class="product-card__body">
+                                <small>{{ $relatedProduct->brand_name ?? 'Tech Shop' }}</small>
+                                <h3><a href="{{ route('frontend.product', $relatedProduct->id) }}">{{ $relatedProduct->name }}</a></h3>
+                                <p>{{ $relatedProduct->short_description }}</p>
+                                <div class="product-card__price">
+                                    <strong>{{ $formatPrice($relatedPrice) }}</strong>
+                                    @if ($relatedDiscount)
+                                        <del>{{ $formatPrice($relatedProduct->price) }}</del>
+                                    @endif
+                                </div>
+                                <div class="product-card__actions">
+                                    <a href="{{ route('frontend.cart') }}"><i class="fas fa-shopping-cart"></i> Thêm</a>
+                                    <a href="{{ route('frontend.wishlist') }}" aria-label="Yêu thích {{ $relatedProduct->name }}"><i class="far fa-heart"></i></a>
+                                </div>
+                            </div>
+                        </article>
+                    @endforeach
+                </div>
+            </div>
+        </section>
+    @endif
 @endsection

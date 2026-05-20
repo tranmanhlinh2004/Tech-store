@@ -6,7 +6,7 @@
     <section class="page-hero page-hero--compact">
         <div class="site-container">
             <div class="breadcrumb-mini">
-                <a href="{{ route('frontend.home') }}">Trang chủ</a>
+                <a href="{{ route('frontend .home') }}">Trang chủ</a>
                 <i class="fas fa-chevron-right"></i>
                 <span>Yêu thích</span>
             </div>
