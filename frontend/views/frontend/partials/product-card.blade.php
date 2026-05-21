@@ -19,7 +19,11 @@
             @endif
         </div>
         <div class="product-card__actions">
-            <a href="{{ route('frontend.cart') }}"><i class="fas fa-shopping-cart"></i> Thêm</a>
+            <form class="cart-add-form" action="{{ route('frontend.cart.store') }}" method="post" @guest data-cart-login-trigger @endguest>
+                @csrf
+                <input type="hidden" name="product_id" value="{{ $product->id }}">
+                <button type="submit"><i class="fas fa-shopping-cart"></i> Thêm</button>
+            </form>
             <a href="{{ route('frontend.wishlist') }}" aria-label="Thêm {{ $product->name }} vào yêu thích"><i class="far fa-heart"></i></a>
         </div>
     </div>

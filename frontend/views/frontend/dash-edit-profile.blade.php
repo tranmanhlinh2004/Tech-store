@@ -19,15 +19,15 @@
                 <div class="form-grid">
                     <div class="field">
                         <label for="profile-name">Họ tên</label>
-                        <input id="profile-name" type="text" value="Nguyễn Minh Anh">
+                        <input id="profile-name" type="text" value="{{ auth()->user()->name }}">
                     </div>
                     <div class="field">
                         <label for="profile-phone">Số điện thoại</label>
-                        <input id="profile-phone" type="tel" value="0901000004">
+                        <input id="profile-phone" type="tel" value="{{ auth()->user()->phone }}">
                     </div>
                     <div class="field field--full">
                         <label for="profile-email">Email</label>
-                        <input id="profile-email" type="email" value="minhanh@example.com">
+                        <input id="profile-email" type="email" value="{{ auth()->user()->email }}">
                     </div>
                 </div>
                 <button class="primary-action" type="submit">Lưu thay đổi</button>

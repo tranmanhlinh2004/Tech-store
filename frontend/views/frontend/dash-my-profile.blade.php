@@ -15,10 +15,10 @@
             @include('frontend.partials.account-nav', ['active' => 'profile'])
 
             <div class="account-panel">
-                <h2 class="panel-title">Nguyễn Minh Anh</h2>
+                <h2 class="panel-title">{{ auth()->user()->name }}</h2>
                 <div class="spec-grid">
-                    <div><span>Email</span><strong>minhanh@example.com</strong></div>
-                    <div><span>Số điện thoại</span><strong>0901 000 004</strong></div>
+                    <div><span>Email</span><strong>{{ auth()->user()->email }}</strong></div>
+                    <div><span>Số điện thoại</span><strong>{{ auth()->user()->phone ?: 'Chưa cập nhật' }}</strong></div>
                     <div><span>Hạng khách hàng</span><strong>Member</strong></div>
                     <div><span>Thiết bị đã mua</span><strong>5 sản phẩm</strong></div>
                 </div>

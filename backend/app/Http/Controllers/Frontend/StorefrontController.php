@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -92,22 +95,290 @@ class StorefrontController extends Controller
             $this->applyPriceFilter($query, $filters['price']);
             $this->applySort($query, $filters['sort']);
 
-            $products = $this->decorateProducts($query->limit(24)->get());
+            $products = $query
+                ->paginate(12)
+                ->withQueryString();
+
+            $products->setCollection($this->decorateProducts($products->getCollection()));
 
             return view('frontend.shop-side-version-2', [
                 'products' => $products,
                 'categories' => $this->rootCategories(),
                 'brands' => DB::table('brands')->where('status', true)->orderBy('name')->get(),
                 'filters' => $filters,
+                'searchKeyword' => $filters['q'],
             ]);
         } catch (Throwable) {
             return view('frontend.shop-side-version-2', [
-                'products' => collect(),
+                'products' => new LengthAwarePaginator([], 0, 12),
                 'categories' => collect(),
                 'brands' => collect(),
                 'filters' => ['q' => '', 'category' => '', 'brand' => '', 'price' => '', 'sort' => 'featured'],
+                'searchKeyword' => '',
             ]);
         }
+    }
+
+    public function cart()
+    {
+        $cartItems = collect();
+        $summary = [
+            'regular_subtotal' => 0,
+            'subtotal' => 0,
+            'discount' => 0,
+            'shipping' => 0,
+            'total' => 0,
+            'item_count' => 0,
+        ];
+
+        if (auth()->check()) {
+            $cart = DB::table('carts')
+                ->where('user_id', auth()->id())
+                ->where('status', 'active')
+                ->latest('updated_at')
+                ->first();
+
+            if ($cart) {
+                $cartItems = DB::table('cart_items')
+                    ->join('products', 'products.id', '=', 'cart_items.product_id')
+                    ->leftJoin('product_variants', 'product_variants.id', '=', 'cart_items.product_variant_id')
+                    ->where('cart_items.cart_id', $cart->id)
+                    ->where('products.status', 'active')
+                    ->select([
+                        'cart_items.id',
+                        'cart_items.product_id',
+                        'cart_items.product_variant_id',
+                        'cart_items.selected_color',
+                        'cart_items.selected_size',
+                        'cart_items.quantity',
+                        'cart_items.price',
+                        'products.name',
+                        'products.slug',
+                        'products.short_description',
+                        'products.price as regular_price',
+                        'products.quantity as stock_quantity',
+                        'products.thumbnail',
+                        'products.warranty_months',
+                        'product_variants.sku as variant_sku',
+                        'product_variants.color as variant_color',
+                        'product_variants.size_label',
+                        'product_variants.storage_label',
+                        'product_variants.image_path as variant_image',
+                    ])
+                    ->orderBy('cart_items.created_at')
+                    ->get()
+                    ->map(function ($item) {
+                        $quantity = max(1, (int) $item->quantity);
+                        $unitPrice = (float) $item->price;
+                        $regularPrice = (float) $item->regular_price;
+
+                        $item->quantity = $quantity;
+                        $item->stock_quantity = max(0, (int) $item->stock_quantity);
+                        $item->unit_price = $unitPrice;
+                        $item->regular_unit_price = $regularPrice;
+                        $item->line_total = $unitPrice * $quantity;
+                        $item->regular_line_total = $regularPrice * $quantity;
+                        $item->display_unit_price = $this->formatCurrency($unitPrice);
+                        $item->display_line_total = $this->formatCurrency($item->line_total);
+                        $item->image = $item->variant_image ?: ($item->thumbnail ?: 'template/images/loading.gif');
+                        $item->detail_url = route('frontend.product', $item->slug);
+                        $item->variant_label = collect([
+                            $item->selected_color ?: $item->variant_color,
+                            $item->selected_size ?: $item->storage_label ?: $item->size_label,
+                            $item->variant_sku,
+                        ])->filter()->implode(' · ');
+
+                        return $item;
+                    });
+
+                $summary['regular_subtotal'] = (float) $cartItems->sum('regular_line_total');
+                $summary['subtotal'] = (float) $cartItems->sum('line_total');
+                $summary['discount'] = max(0, $summary['regular_subtotal'] - $summary['subtotal']);
+                $summary['total'] = $summary['subtotal'] + $summary['shipping'];
+                $summary['item_count'] = $cartItems->count();
+            }
+        }
+
+        return view('frontend.cart', [
+            'cartItems' => $cartItems,
+            'cartSummary' => $summary,
+            'isGuestCart' => ! auth()->check(),
+        ]);
+    }
+
+    public function addToCart(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'product_id' => ['required', 'integer', 'min:1'],
+            'quantity' => ['nullable', 'integer', 'min:1', 'max:99'],
+        ]);
+
+        if (! auth()->check()) {
+            return back()->with('cart_login_required', true);
+        }
+
+        $product = DB::table('products')
+            ->where('id', $validated['product_id'])
+            ->where('status', 'active')
+            ->first();
+
+        if (! $product) {
+            return back()->withErrors(['cart' => 'Sản phẩm không còn khả dụng.']);
+        }
+
+        $stockQuantity = max(0, (int) $product->quantity);
+
+        if ($stockQuantity === 0) {
+            return back()->withErrors(['cart' => 'Sản phẩm đã hết hàng.']);
+        }
+
+        $requestedQuantity = min((int) ($validated['quantity'] ?? 1), $stockQuantity);
+        $regularPrice = (float) $product->price;
+        $salePrice = $product->sale_price !== null ? (float) $product->sale_price : null;
+        $unitPrice = $salePrice !== null && $salePrice > 0 && $salePrice < $regularPrice
+            ? $salePrice
+            : $regularPrice;
+        $userId = (int) auth()->id();
+
+        DB::transaction(function () use ($product, $requestedQuantity, $stockQuantity, $unitPrice, $userId): void {
+            $cart = DB::table('carts')
+                ->where('user_id', $userId)
+                ->where('status', 'active')
+                ->latest('updated_at')
+                ->first();
+
+            $cartId = $cart?->id ?? DB::table('carts')->insertGetId([
+                'user_id' => $userId,
+                'status' => 'active',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            $existingItem = DB::table('cart_items')
+                ->where('cart_id', $cartId)
+                ->where('product_id', $product->id)
+                ->whereNull('product_variant_id')
+                ->first();
+
+            if ($existingItem) {
+                DB::table('cart_items')
+                    ->where('id', $existingItem->id)
+                    ->update([
+                        'quantity' => min($stockQuantity, (int) $existingItem->quantity + $requestedQuantity),
+                        'price' => $unitPrice,
+                        'updated_at' => now(),
+                    ]);
+            } else {
+                DB::table('cart_items')->insert([
+                    'cart_id' => $cartId,
+                    'product_id' => $product->id,
+                    'quantity' => $requestedQuantity,
+                    'price' => $unitPrice,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
+            DB::table('carts')
+                ->where('id', $cartId)
+                ->update(['updated_at' => now()]);
+        });
+
+        return redirect()
+            ->route('frontend.cart')
+            ->with('status', 'Đã thêm sản phẩm vào giỏ hàng.');
+    }
+
+    public function updateCartItem(Request $request, int $item): RedirectResponse|JsonResponse
+    {
+        if (! auth()->check()) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Vui lòng đăng nhập để cập nhật giỏ hàng.'], 401);
+            }
+
+            return redirect()->route('frontend.cart')->with('cart_login_required', true);
+        }
+
+        $validated = $request->validate([
+            'quantity' => ['required', 'integer', 'min:1', 'max:99'],
+        ]);
+
+        $cartItem = $this->activeCartItemForCurrentUser($item);
+
+        if (! $cartItem) {
+            return $this->cartActionError($request, 'Không tìm thấy sản phẩm trong giỏ hàng.', 404);
+        }
+
+        if ($cartItem->product_status !== 'active') {
+            return $this->cartActionError($request, 'Sản phẩm không còn khả dụng.');
+        }
+
+        $stockQuantity = max(0, (int) $cartItem->stock_quantity);
+
+        if ($stockQuantity === 0) {
+            return $this->cartActionError($request, 'Sản phẩm đã hết hàng.');
+        }
+
+        $quantity = min((int) $validated['quantity'], $stockQuantity);
+
+        DB::table('cart_items')
+            ->where('id', $cartItem->id)
+            ->update([
+                'quantity' => $quantity,
+                'updated_at' => now(),
+            ]);
+
+        DB::table('carts')
+            ->where('id', $cartItem->cart_id)
+            ->update(['updated_at' => now()]);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Đã cập nhật số lượng sản phẩm.',
+                'item' => $this->cartItemPayload($cartItem, $quantity),
+                'summary' => $this->cartSummaryPayload(),
+            ]);
+        }
+
+        return back()->with('status', 'Đã cập nhật số lượng sản phẩm.');
+    }
+
+    public function removeCartItem(Request $request, int $item): RedirectResponse|JsonResponse
+    {
+        if (! auth()->check()) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Vui lòng đăng nhập để cập nhật giỏ hàng.'], 401);
+            }
+
+            return redirect()->route('frontend.cart')->with('cart_login_required', true);
+        }
+
+        $cartItem = $this->activeCartItemForCurrentUser($item);
+
+        if (! $cartItem) {
+            return $this->cartActionError($request, 'Không tìm thấy sản phẩm trong giỏ hàng.', 404);
+        }
+
+        DB::table('cart_items')
+            ->where('id', $cartItem->id)
+            ->delete();
+
+        DB::table('carts')
+            ->where('id', $cartItem->cart_id)
+            ->update(['updated_at' => now()]);
+
+        if ($request->expectsJson()) {
+            $summary = $this->cartSummaryPayload();
+
+            return response()->json([
+                'message' => 'Đã xóa sản phẩm khỏi giỏ hàng.',
+                'removed_item_id' => $cartItem->id,
+                'is_empty' => $summary['item_count'] === 0,
+                'summary' => $summary,
+            ]);
+        }
+
+        return back()->with('status', 'Đã xóa sản phẩm khỏi giỏ hàng.');
     }
 
     public function product(?string $slug = null)
@@ -289,6 +560,101 @@ class StorefrontController extends Controller
     private function decorateProducts(Collection $products): Collection
     {
         return $products->map(fn ($product) => $this->decorateProduct($product));
+    }
+
+    private function activeCartItemForCurrentUser(int $itemId): ?object
+    {
+        return DB::table('cart_items')
+            ->join('carts', 'carts.id', '=', 'cart_items.cart_id')
+            ->join('products', 'products.id', '=', 'cart_items.product_id')
+            ->where('cart_items.id', $itemId)
+            ->where('carts.user_id', auth()->id())
+            ->where('carts.status', 'active')
+            ->select([
+                'cart_items.id',
+                'cart_items.cart_id',
+                'cart_items.quantity',
+                'cart_items.price',
+                'products.price as regular_price',
+                'products.quantity as stock_quantity',
+                'products.status as product_status',
+            ])
+            ->first();
+    }
+
+    private function cartActionError(Request $request, string $message, int $status = 422): RedirectResponse|JsonResponse
+    {
+        if ($request->expectsJson()) {
+            return response()->json(['message' => $message], $status);
+        }
+
+        return back()->withErrors(['cart' => $message]);
+    }
+
+    private function cartItemPayload(object $cartItem, int $quantity): array
+    {
+        $stockQuantity = max(0, (int) $cartItem->stock_quantity);
+        $unitPrice = (float) $cartItem->price;
+        $regularPrice = (float) $cartItem->regular_price;
+
+        return [
+            'id' => (int) $cartItem->id,
+            'quantity' => $quantity,
+            'stock_quantity' => $stockQuantity,
+            'decrease_quantity' => max(1, $quantity - 1),
+            'increase_quantity' => min($stockQuantity, $quantity + 1),
+            'decrease_disabled' => $quantity <= 1,
+            'increase_disabled' => $quantity >= $stockQuantity,
+            'display_line_total' => $this->formatCurrency($unitPrice * $quantity),
+            'display_regular_line_total' => $this->formatCurrency($regularPrice * $quantity),
+        ];
+    }
+
+    private function cartSummaryPayload(): array
+    {
+        $regularSubtotal = 0.0;
+        $subtotal = 0.0;
+        $itemCount = 0;
+
+        if (auth()->check()) {
+            $cartId = DB::table('carts')
+                ->where('user_id', auth()->id())
+                ->where('status', 'active')
+                ->latest('updated_at')
+                ->value('id');
+
+            if ($cartId) {
+                DB::table('cart_items')
+                    ->join('products', 'products.id', '=', 'cart_items.product_id')
+                    ->where('cart_items.cart_id', $cartId)
+                    ->where('products.status', 'active')
+                    ->select([
+                        'cart_items.quantity',
+                        'cart_items.price',
+                        'products.price as regular_price',
+                    ])
+                    ->orderBy('cart_items.id')
+                    ->get()
+                    ->each(function ($item) use (&$regularSubtotal, &$subtotal, &$itemCount): void {
+                        $quantity = max(1, (int) $item->quantity);
+
+                        $regularSubtotal += (float) $item->regular_price * $quantity;
+                        $subtotal += (float) $item->price * $quantity;
+                        $itemCount++;
+                    });
+            }
+        }
+
+        $discount = max(0, $regularSubtotal - $subtotal);
+        $total = $subtotal;
+
+        return [
+            'item_count' => $itemCount,
+            'item_count_label' => $itemCount.' sản phẩm',
+            'regular_subtotal' => $this->formatCurrency($regularSubtotal),
+            'discount' => '-'.$this->formatCurrency($discount),
+            'total' => $this->formatCurrency($total),
+        ];
     }
 
     private function decorateProduct(object $product): object

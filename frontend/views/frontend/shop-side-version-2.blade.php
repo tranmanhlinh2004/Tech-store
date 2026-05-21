@@ -6,6 +6,8 @@
 @php
     $formatPrice = fn ($value) => number_format((float) $value, 0, ',', '.').'đ';
     $fallbackImage = 'template/images/product/electronic/product1.jpg';
+    $productsTotal = method_exists($products, 'total') ? $products->total() : $products->count();
+    $searchKeyword = $searchKeyword ?? ($filters['q'] ?? '');
 @endphp
 
 @section('content')
@@ -76,12 +78,10 @@
                         <option value="newest" @selected($filters['sort'] === 'newest')>Mới nhất</option>
                         <option value="best_selling" @selected($filters['sort'] === 'best_selling')>Bán chạy</option>
                     </select>
-
-                    <button class="primary-action" type="submit">Áp dụng</button>
-                </form>
+                </div>
 
                 <div class="shop-result-count">
-                    Hiển thị {{ $products->count() }} / {{ $products->total() }} sản phẩm
+                    Hiển thị {{ $products->count() }} / {{ $productsTotal }} sản phẩm
                     @if ($searchKeyword !== '')
                         cho từ khóa <strong>"{{ $searchKeyword }}"</strong>
                     @endif
@@ -108,6 +108,12 @@
                         </div>
                     @endforelse
                 </div>
+
+                @if (method_exists($products, 'hasPages') && $products->hasPages())
+                    <div class="pagination-row">
+                        {{ $products->links() }}
+                    </div>
+                @endif
             </div>
         </div>
     </section>

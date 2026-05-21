@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Frontend\AuthController;
 use App\Http\Controllers\Frontend\StorefrontController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\View;
@@ -80,17 +81,28 @@ Route::get('/', [StorefrontController::class, 'home'])->name('frontend.home');
 
 Route::get('/shop', [StorefrontController::class, 'shop'])->name('frontend.shop');
 Route::get('/product/{slug?}', [StorefrontController::class, 'product'])->name('frontend.product');
-Route::view('/cart', 'frontend.cart')->name('frontend.cart');
+Route::get('/cart', [StorefrontController::class, 'cart'])->name('frontend.cart');
+Route::post('/cart/items', [StorefrontController::class, 'addToCart'])->name('frontend.cart.store');
+Route::patch('/cart/items/{item}', [StorefrontController::class, 'updateCartItem'])->name('frontend.cart.items.update');
+Route::delete('/cart/items/{item}', [StorefrontController::class, 'removeCartItem'])->name('frontend.cart.items.destroy');
 Route::view('/checkout', 'frontend.checkout')->name('frontend.checkout');
 Route::view('/contact', 'frontend.contact')->name('frontend.contact');
 Route::view('/about', 'frontend.about')->name('frontend.about');
-Route::view('/signin', 'frontend.signin')->name('frontend.signin');
-Route::view('/signup', 'frontend.signup')->name('frontend.signup');
+Route::get('/login', fn () => redirect()->route('frontend.signin'))->name('login');
+Route::get('/signin', [AuthController::class, 'signin'])->name('frontend.signin');
+Route::post('/signin', [AuthController::class, 'login'])->name('frontend.signin.store');
+Route::get('/signup', [AuthController::class, 'signup'])->name('frontend.signup');
+Route::post('/signup', [AuthController::class, 'register'])->name('frontend.signup.store');
+Route::post('/logout', [AuthController::class, 'logout'])->name('frontend.logout');
 Route::view('/wishlist', 'frontend.wishlist')->name('frontend.wishlist');
-Route::view('/dashboard', 'frontend.dashboard')->name('frontend.dashboard');
+Route::view('/dashboard', 'frontend.dashboard')->middleware('auth')->name('frontend.dashboard');
 
 Route::get('/{page}.html', function (string $page) {
     abort_unless(View::exists("frontend.$page"), 404);
+
+    if (str_starts_with($page, 'dash-') && ! auth()->check()) {
+        return redirect()->guest(route('frontend.signin'));
+    }
 
     return view("frontend.$page");
 })->where('page', '[A-Za-z0-9\-]+')->name('frontend.page');

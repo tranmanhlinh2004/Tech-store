@@ -68,7 +68,11 @@
                 </div>
 
                 <div class="hero__actions u-m-t-20">
-                    <a class="primary-action" href="{{ route('frontend.cart') }}"><i class="fas fa-shopping-cart"></i> Thêm vào giỏ</a>
+                    <form class="cart-add-form" action="{{ route('frontend.cart.store') }}" method="post" @guest data-cart-login-trigger @endguest>
+                        @csrf
+                        <input type="hidden" name="product_id" value="{{ $product->id }}">
+                        <button class="primary-action" type="submit"><i class="fas fa-shopping-cart"></i> Thêm vào giỏ</button>
+                    </form>
                     <a class="secondary-action" href="{{ route('frontend.checkout') }}">Mua ngay</a>
                 </div>
 

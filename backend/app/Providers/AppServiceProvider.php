@@ -46,7 +46,30 @@ class AppServiceProvider extends ServiceProvider
                 $menuCategories = collect();
             }
 
-            $view->with('menuCategories', $menuCategories);
+            $cartItemCount = 0;
+
+            if (auth()->check()) {
+                try {
+                    $activeCartId = DB::table('carts')
+                        ->where('user_id', auth()->id())
+                        ->where('status', 'active')
+                        ->latest('updated_at')
+                        ->value('id');
+
+                    if ($activeCartId) {
+                        $cartItemCount = (int) DB::table('cart_items')
+                            ->where('cart_id', $activeCartId)
+                            ->count();
+                    }
+                } catch (\Throwable) {
+                    $cartItemCount = 0;
+                }
+            }
+
+            $view->with([
+                'menuCategories' => $menuCategories,
+                'cartItemCount' => $cartItemCount,
+            ]);
         });
     }
 }

@@ -20,7 +20,7 @@
             @include('frontend.partials.account-nav', ['active' => 'dashboard'])
 
             <div class="account-panel">
-                <h2 class="panel-title">Xin chào, Minh Anh</h2>
+                <h2 class="panel-title">Xin chào, {{ auth()->user()->name }}</h2>
                 <div class="stat-grid">
                     <div class="mini-stat"><span>Đơn đang xử lý</span><strong>2</strong></div>
                     <div class="mini-stat"><span>Sản phẩm yêu thích</span><strong>8</strong></div>
