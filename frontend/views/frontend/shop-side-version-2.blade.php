@@ -3,6 +3,11 @@
 @section('title', 'Sản phẩm | Đồ Công Nghệ')
 @section('meta_description', 'Danh sách laptop, điện thoại, phụ kiện, màn hình và linh kiện PC tại Đồ Công Nghệ.')
 
+@php
+    $formatPrice = fn ($value) => number_format((float) $value, 0, ',', '.').'đ';
+    $fallbackImage = 'template/images/product/electronic/product1.jpg';
+@endphp
+
 @section('content')
     <section class="page-hero page-hero--compact">
         <div class="site-container">
@@ -12,7 +17,7 @@
                 <span>Sản phẩm</span>
             </div>
             <h1>Danh mục sản phẩm công nghệ</h1>
-            <p>Lọc nhanh theo nhu cầu, thương hiệu và ngân sách để chọn đúng thiết bị.</p>
+            <p>Lọc nhanh theo danh mục, tìm kiếm theo tên, SKU hoặc thương hiệu để chọn đúng thiết bị.</p>
         </div>
     </section>
 
@@ -71,6 +76,15 @@
                         <option value="newest" @selected($filters['sort'] === 'newest')>Mới nhất</option>
                         <option value="best_selling" @selected($filters['sort'] === 'best_selling')>Bán chạy</option>
                     </select>
+
+                    <button class="primary-action" type="submit">Áp dụng</button>
+                </form>
+
+                <div class="shop-result-count">
+                    Hiển thị {{ $products->count() }} / {{ $products->total() }} sản phẩm
+                    @if ($searchKeyword !== '')
+                        cho từ khóa <strong>"{{ $searchKeyword }}"</strong>
+                    @endif
                 </div>
 
                 <div class="hero__actions u-m-t-20">

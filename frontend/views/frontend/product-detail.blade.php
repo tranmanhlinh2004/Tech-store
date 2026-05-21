@@ -14,6 +14,10 @@
                 <a href="{{ route('frontend.home') }}">Trang chủ</a>
                 <i class="fas fa-chevron-right"></i>
                 <a href="{{ route('frontend.shop') }}">Sản phẩm</a>
+                @if ($product->category_name)
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="{{ route('frontend.shop', ['category' => $product->category_id]) }}">{{ $product->category_name }}</a>
+                @endif
                 <i class="fas fa-chevron-right"></i>
                 <a href="{{ route('frontend.shop', ['category' => $product->category_slug]) }}">{{ $product->category_name }}</a>
                 <i class="fas fa-chevron-right"></i>
@@ -30,6 +34,7 @@
                 <div class="gallery-main">
                     <img src="{{ asset($mainImage) }}" alt="{{ $product->name }}">
                 </div>
+
                 <div class="thumb-row">
                     @foreach($productImages as $image)
                         <img src="{{ asset($image) }}" alt="{{ $product->name }}">
@@ -62,7 +67,7 @@
                     @endforelse
                 </div>
 
-                <div class="hero__actions">
+                <div class="hero__actions u-m-t-20">
                     <a class="primary-action" href="{{ route('frontend.cart') }}"><i class="fas fa-shopping-cart"></i> Thêm vào giỏ</a>
                     <a class="secondary-action" href="{{ route('frontend.checkout') }}">Mua ngay</a>
                 </div>
@@ -90,6 +95,7 @@
                     <li><i class="fas fa-check"></i> Đổi trả trong 7 ngày nếu phát sinh lỗi phần cứng từ nhà sản xuất.</li>
                 </ul>
             </div>
+
             <aside class="summary-card">
                 <h2 class="panel-title">Thông số kỹ thuật</h2>
                 <div class="summary-list">
