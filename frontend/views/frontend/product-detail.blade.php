@@ -1,20 +1,26 @@
 @extends('frontend.layouts.tech')
 
-@section('title', 'ROG Strix G16 | Đồ Công Nghệ')
-@section('meta_description', 'Chi tiết sản phẩm Asus ROG Strix G16 tại Đồ Công Nghệ.')
+@section('title', $product->name.' | Đồ Công Nghệ')
+@section('meta_description', $product->teaser)
 
 @section('content')
-    <section class="page-hero page-hero--compact">
+    @php
+        $mainImage = $productImages->first() ?: ($product->thumbnail ?: 'template/images/loading.gif');
+    @endphp
+
+    <section class="page-hero page-hero--compact" style="background: linear-gradient(90deg, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.72)), url('{{ asset($mainImage) }}') right center / contain no-repeat, #111827;">
         <div class="site-container">
             <div class="breadcrumb-mini">
                 <a href="{{ route('frontend.home') }}">Trang chủ</a>
                 <i class="fas fa-chevron-right"></i>
                 <a href="{{ route('frontend.shop') }}">Sản phẩm</a>
                 <i class="fas fa-chevron-right"></i>
-                <span>ROG Strix G16</span>
+                <a href="{{ route('frontend.shop', ['category' => $product->category_slug]) }}">{{ $product->category_name }}</a>
+                <i class="fas fa-chevron-right"></i>
+                <span>{{ $product->name }}</span>
             </div>
-            <h1>Asus ROG Strix G16</h1>
-            <p>Laptop gaming hiệu năng cao cho esports, đồ họa và học tập kỹ thuật.</p>
+            <h1>{{ $product->name }}</h1>
+            <p>{{ $product->teaser }}</p>
         </div>
     </section>
 
@@ -22,34 +28,38 @@
         <div class="site-container detail-grid">
             <div class="gallery-card">
                 <div class="gallery-main">
-                    <img src="{{ asset('template/images/product/gaming-laptop/asus-rog-strix-g16.jpg') }}" alt="Asus ROG Strix G16">
+                    <img src="{{ asset($mainImage) }}" alt="{{ $product->name }}">
                 </div>
                 <div class="thumb-row">
-                    <img src="{{ asset('template/images/product/gaming-laptop/asus-rog-strix-g16.jpg') }}" alt="Góc nhìn ROG Strix G16">
-                    <img src="{{ asset('template/images/product/gaming-laptop/msi-katana-15-b13v.png') }}" alt="Laptop gaming MSI">
-                    <img src="{{ asset('template/images/product/gaming-laptop/lenovo-legion-5-pro.jpg') }}" alt="Laptop gaming Lenovo">
-                    <img src="{{ asset('template/images/product/monitor/lg-ultragear-27gp850.jpg') }}" alt="Màn hình gaming">
+                    @foreach($productImages as $image)
+                        <img src="{{ asset($image) }}" alt="{{ $product->name }}">
+                    @endforeach
                 </div>
             </div>
 
             <aside class="purchase-card">
                 <div class="rating-row">
                     <span><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i></span>
-                    <span class="muted">4.8 · 126 đánh giá</span>
+                    <span class="muted">{{ number_format($product->view_count) }} lượt xem</span>
                 </div>
-                <h2>ROG Strix G16 Core i7 RTX 4060</h2>
-                <p class="muted">Màn hình tần số quét cao, tản nhiệt tốt, phù hợp chơi game, dựng video và chạy phần mềm kỹ thuật.</p>
+                <h2>{{ $product->name }}</h2>
+                <p class="muted">{{ $product->teaser }}</p>
                 <div class="price-row">
-                    <strong>32.990.000đ</strong>
-                    <del>34.990.000đ</del>
+                    <strong>{{ $product->display_price }}</strong>
+                    @if($product->display_original_price)
+                        <del>{{ $product->display_original_price }}</del>
+                    @endif
                 </div>
 
-                <strong>Cấu hình</strong>
+                <strong>Thông tin nhanh</strong>
                 <div class="choice-row">
-                    <span>Core i7</span>
-                    <span>RTX 4060</span>
-                    <span>16GB RAM</span>
-                    <span>512GB SSD</span>
+                    @forelse($specifications->take(4) as $spec)
+                        <span>{{ $spec->spec_name }}: {{ $spec->spec_value }}</span>
+                    @empty
+                        <span>{{ $product->brand_name }}</span>
+                        <span>{{ $product->category_name }}</span>
+                        <span>{{ $product->sku }}</span>
+                    @endforelse
                 </div>
 
                 <div class="hero__actions">
@@ -58,10 +68,12 @@
                 </div>
 
                 <div class="spec-grid u-m-t-18">
-                    <div><span>Bảo hành</span><strong>24 tháng</strong></div>
-                    <div><span>Tình trạng</span><strong>Còn hàng</strong></div>
-                    <div><span>Giao hàng</span><strong>Trong ngày</strong></div>
-                    <div><span>Trả góp</span><strong>0%</strong></div>
+                    <div><span>Thương hiệu</span><strong>{{ $product->brand_name }}</strong></div>
+                    <div><span>Danh mục</span><strong>{{ $product->category_name }}</strong></div>
+                    <div><span>Bảo hành</span><strong>{{ $product->warranty_months }} tháng</strong></div>
+                    <div><span>Tình trạng</span><strong>{{ $product->stock_label }}</strong></div>
+                    <div><span>Mã sản phẩm</span><strong>{{ $product->sku }}</strong></div>
+                    <div><span>Giao hàng</span><strong>{{ $product->is_free_shipping ? 'Miễn phí' : 'Trong ngày' }}</strong></div>
                 </div>
             </aside>
         </div>
@@ -71,21 +83,42 @@
         <div class="site-container content-grid">
             <div class="info-card">
                 <h2 class="panel-title">Mô tả sản phẩm</h2>
-                <p class="muted">ROG Strix G16 là lựa chọn cân bằng cho người dùng cần hiệu năng mạnh, màn hình mượt và hệ thống tản nhiệt ổn định. Thiết kế phù hợp cả gaming lẫn công việc đồ họa.</p>
+                <p class="muted">{{ $product->description ?: $product->teaser }}</p>
                 <ul class="feature-list">
-                    <li><i class="fas fa-check"></i> GPU RTX 4060 đáp ứng tốt game phổ biến và phần mềm dựng hình.</li>
-                    <li><i class="fas fa-check"></i> Màn hình tần số quét cao giúp thao tác mượt và giảm nhòe chuyển động.</li>
-                    <li><i class="fas fa-check"></i> Hỗ trợ nâng cấp RAM, SSD theo nhu cầu sử dụng lâu dài.</li>
+                    <li><i class="fas fa-check"></i> Tư vấn cấu hình theo nhu cầu học tập, làm việc hoặc giải trí.</li>
+                    <li><i class="fas fa-check"></i> Hỗ trợ kiểm tra máy, phụ kiện và tình trạng bảo hành trước khi nhận hàng.</li>
+                    <li><i class="fas fa-check"></i> Đổi trả trong 7 ngày nếu phát sinh lỗi phần cứng từ nhà sản xuất.</li>
                 </ul>
             </div>
             <aside class="summary-card">
-                <h2 class="panel-title">Dịch vụ đi kèm</h2>
+                <h2 class="panel-title">Thông số kỹ thuật</h2>
                 <div class="summary-list">
-                    <div><span>Cài Windows, Office</span><strong>Miễn phí</strong></div>
-                    <div><span>Vệ sinh lần đầu</span><strong>Miễn phí</strong></div>
-                    <div><span>Đổi trả lỗi phần cứng</span><strong>7 ngày</strong></div>
+                    @forelse($specifications as $spec)
+                        <div><span>{{ $spec->spec_name }}</span><strong>{{ $spec->spec_value }}</strong></div>
+                    @empty
+                        <div><span>SKU</span><strong>{{ $product->sku }}</strong></div>
+                        <div><span>Tồn kho</span><strong>{{ $product->quantity }}</strong></div>
+                    @endforelse
                 </div>
             </aside>
         </div>
     </section>
+
+    @if($relatedProducts->isNotEmpty())
+        <section class="product-section" aria-labelledby="related-title">
+            <div class="site-container">
+                <div class="section-heading">
+                    <span>Gợi ý thêm</span>
+                    <h2 id="related-title">Sản phẩm liên quan</h2>
+                    <a href="{{ route('frontend.shop', ['category' => $product->category_slug]) }}">Xem danh mục <i class="fas fa-arrow-right"></i></a>
+                </div>
+
+                <div class="product-grid">
+                    @foreach($relatedProducts as $relatedProduct)
+                        @include('frontend.partials.product-card', ['product' => $relatedProduct])
+                    @endforeach
+                </div>
+            </div>
+        </section>
+    @endif
 @endsection
