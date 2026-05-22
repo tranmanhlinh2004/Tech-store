@@ -8,13 +8,6 @@ use Symfony\Component\HttpFoundation\Response;
 
 class EnsureAdminRole
 {
-    private const ALLOWED_ROLES = [
-        'admin',
-        'staff',
-        'manage',
-        'manager',
-    ];
-
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
@@ -23,7 +16,7 @@ class EnsureAdminRole
             return redirect()->guest(route('frontend.signin'));
         }
 
-        if (! $user->hasAnyRole(self::ALLOWED_ROLES)) {
+        if (! $user->canAccessAdmin()) {
             return redirect()
                 ->route('frontend.home')
                 ->with('error', 'Tài khoản của bạn không có quyền truy cập trang quản trị.');

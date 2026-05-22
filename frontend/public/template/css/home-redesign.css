@@ -207,7 +207,8 @@ input {
     color: #1f2937;
 }
 
-.icon-button--cart span {
+.icon-button--cart span,
+.icon-button--wishlist span {
     position: absolute;
     top: -7px;
     right: -7px;
@@ -875,6 +876,10 @@ input {
     margin-top: 16px;
 }
 
+.product-card__actions form {
+    margin: 0;
+}
+
 .product-card__actions a,
 .product-card__actions button {
     min-height: 42px;
@@ -899,6 +904,13 @@ input {
     background: var(--ink);
     border-color: var(--ink);
     color: #ffffff;
+}
+
+.product-card__actions .wishlist-action.is-active,
+.wishlist-detail-action.is-active {
+    border-color: rgba(225, 29, 72, 0.26);
+    background: #fff1f2;
+    color: var(--rose);
 }
 
 .pagination-row {
@@ -1340,6 +1352,10 @@ input {
     margin: 0;
 }
 
+.u-m-t-6 {
+    margin-top: 6px;
+}
+
 .u-m-t-18 {
     margin-top: 18px;
 }
@@ -1387,7 +1403,8 @@ button.danger-action {
     flex: 0 0 auto;
 }
 
-.hero__actions .cart-add-form .primary-action {
+.hero__actions .cart-add-form .primary-action,
+.hero__actions .cart-add-form .secondary-action {
     width: 100%;
 }
 
@@ -1721,6 +1738,28 @@ button.danger-action {
     gap: 16px;
 }
 
+.review-login-panel {
+    display: grid;
+    gap: 14px;
+}
+
+.review-login-panel p {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.6;
+}
+
+.review-login-actions {
+    display: grid;
+    gap: 10px;
+}
+
+.review-login-actions .primary-action,
+.review-login-actions .secondary-action {
+    width: 100%;
+    justify-content: center;
+}
+
 .rating-input {
     display: inline-flex;
     flex-direction: row-reverse;
@@ -1821,6 +1860,22 @@ button.danger-action {
 .wishlist-line h3 {
     margin: 0 0 8px;
     font-size: 18px;
+}
+
+.wishlist-line form {
+    margin: 0;
+}
+
+.wishlist-line__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.wishlist-line form .primary-action,
+.wishlist-line form .secondary-action {
+    white-space: nowrap;
 }
 
 .cart-line.is-updating {
@@ -2056,6 +2111,14 @@ button.danger-action {
     display: grid;
     grid-template-columns: 38px minmax(0, 1fr);
     gap: 12px;
+}
+
+.timeline-item--link {
+    color: inherit;
+}
+
+.timeline-item--link:hover strong {
+    color: var(--primary);
 }
 
 .timeline-item i {
@@ -2401,12 +2464,26 @@ button.danger-action {
     .cart-line__aside,
     .wishlist-line > strong,
     .cart-line > a,
-    .wishlist-line > a {
+    .wishlist-line > a,
+    .wishlist-line__actions {
         grid-column: 1 / -1;
     }
 
     .cart-line__aside {
         justify-items: stretch;
+    }
+
+    .wishlist-line__actions {
+        justify-content: stretch;
+    }
+
+    .wishlist-line__actions form {
+        flex: 1 1 160px;
+    }
+
+    .wishlist-line__actions .primary-action,
+    .wishlist-line__actions .secondary-action {
+        width: 100%;
     }
 
     .auth-visual {

@@ -6,7 +6,13 @@
     <section class="page-hero page-hero--compact">
         <div class="site-container">
             <h1>Theo dõi đơn hàng</h1>
-            <p>Cập nhật từng bước xử lý cho đơn #TS20260518.</p>
+            <p>
+                @if($order)
+                    Cập nhật từng bước xử lý cho đơn #{{ $order->order_code }}.
+                @else
+                    Chưa có đơn hàng để theo dõi.
+                @endif
+            </p>
         </div>
     </section>
 
@@ -15,21 +21,56 @@
             @include('frontend.partials.account-nav', ['active' => 'track'])
 
             <div class="account-panel">
-                <h2 class="panel-title">ROG Strix G16</h2>
-                <div class="timeline">
-                    <div class="timeline-item">
-                        <i class="fas fa-check"></i>
-                        <div><strong>Đã xác nhận</strong><p class="muted">09:10 · 18/05/2026</p></div>
+                @if($order)
+                    <div class="shop-toolbar">
+                        <div>
+                            <h2 class="panel-title u-m-0">Đơn #{{ $order->order_code }}</h2>
+                            <p class="muted u-m-t-6">{{ $order->item_summary }} · {{ $order->display_total }}</p>
+                        </div>
+                        <span class="{{ $order->status_badge_class }}">{{ ucfirst($order->status_label) }}</span>
                     </div>
-                    <div class="timeline-item">
-                        <i class="fas fa-box"></i>
-                        <div><strong>Đang đóng gói</strong><p class="muted">Kiểm tra máy, phụ kiện và phiếu bảo hành.</p></div>
+
+                    <div class="spec-grid u-m-t-18">
+                        <div><span>Người nhận</span><strong>{{ $order->shipping_full_name ?: $order->customer_name }}</strong></div>
+                        <div><span>Số điện thoại</span><strong>{{ $order->shipping_phone ?: $order->customer_phone }}</strong></div>
+                        <div><span>Thanh toán</span><strong>{{ $order->payment_label }}</strong></div>
+                        <div><span>Mã vận đơn</span><strong>{{ $order->tracking_number ?: 'Đang cập nhật' }}</strong></div>
                     </div>
-                    <div class="timeline-item">
-                        <i class="fas fa-truck"></i>
-                        <div><strong>Đang giao</strong><p class="muted">Dự kiến giao trước 18:00 hôm nay.</p></div>
+
+                    <h3 class="panel-title u-m-t-20">Sản phẩm trong đơn</h3>
+                    <div class="cart-lines">
+                        @foreach($orderItems as $item)
+                            <article class="cart-line">
+                                <img src="{{ asset($item->image) }}" alt="{{ $item->product_name }}">
+                                <div class="cart-line__content">
+                                    <h3>{{ $item->product_name }}</h3>
+                                    <p class="muted">Số lượng: {{ $item->quantity }} · Đơn giá: {{ $item->display_price }}</p>
+                                </div>
+                                <strong>{{ $item->display_total }}</strong>
+                            </article>
+                        @endforeach
                     </div>
-                </div>
+
+                    <h3 class="panel-title u-m-t-20">Lịch sử trạng thái</h3>
+                    <div class="timeline">
+                        @foreach($orderHistory as $history)
+                            <div class="timeline-item">
+                                <i class="{{ $history->icon }}"></i>
+                                <div>
+                                    <strong>{{ ucfirst($history->status_label) }}</strong>
+                                    <p class="muted">{{ $history->note ?: 'Đã cập nhật trạng thái đơn hàng.' }}</p>
+                                    <span class="muted">{{ $history->display_date }}</span>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="empty-state empty-state--small">
+                        <strong>Chưa có đơn hàng</strong>
+                        <span>Khi có đơn hàng, tiến trình xử lý và vận chuyển sẽ hiển thị tại đây.</span>
+                        <a class="primary-action" href="{{ route('frontend.shop') }}">Xem sản phẩm</a>
+                    </div>
+                @endif
             </div>
         </div>
     </section>

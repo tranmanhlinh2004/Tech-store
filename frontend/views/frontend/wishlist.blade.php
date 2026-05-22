@@ -17,22 +17,43 @@
 
     <section class="inner-section">
         <div class="site-container cart-lines">
-            <article class="wishlist-line">
-                <img src="{{ asset('template/images/product/iphone/iphone-15-pro-256gb.webp') }}" alt="iPhone 15 Pro">
-                <div>
-                    <h3>iPhone 15 Pro 256GB</h3>
-                    <p class="muted">Apple · còn hàng · bảo hành 12 tháng</p>
+            @guest
+                <div class="empty-state empty-state--small">
+                    <strong>Đăng nhập để xem yêu thích</strong>
+                    <span>Danh sách yêu thích được lưu theo tài khoản của bạn.</span>
+                    <a class="primary-action" href="{{ route('frontend.signin') }}">Đăng nhập</a>
                 </div>
-                <a class="primary-action" href="{{ route('frontend.cart') }}" @guest data-cart-login-trigger @endguest>Thêm vào giỏ</a>
-            </article>
-            <article class="wishlist-line">
-                <img src="{{ asset('template/images/product/monitor/lg-ultragear-27gp850.jpg') }}" alt="LG UltraGear">
-                <div>
-                    <h3>LG UltraGear 27GP850</h3>
-                    <p class="muted">Màn QHD 165Hz · phù hợp gaming và làm việc</p>
-                </div>
-                <a class="primary-action" href="{{ route('frontend.cart') }}" @guest data-cart-login-trigger @endguest>Thêm vào giỏ</a>
-            </article>
+            @else
+                @forelse($wishlistProducts as $product)
+                    <article class="wishlist-line">
+                        <a href="{{ route('frontend.product', $product->slug) }}">
+                            <img src="{{ asset($product->thumbnail ?: 'template/images/loading.gif') }}" alt="{{ $product->name }}">
+                        </a>
+                        <div>
+                            <h3><a href="{{ route('frontend.product', $product->slug) }}">{{ $product->name }}</a></h3>
+                            <p class="muted">{{ $product->brand_name }} · {{ $product->stock_label }} · bảo hành {{ $product->warranty_months }} tháng</p>
+                            <strong>{{ $product->display_price }}</strong>
+                        </div>
+                        <div class="wishlist-line__actions">
+                            <form action="{{ route('frontend.cart.store') }}" method="post">
+                                @csrf
+                                <input type="hidden" name="product_id" value="{{ $product->id }}">
+                                <button class="primary-action" type="submit">Thêm vào giỏ</button>
+                            </form>
+                            <form action="{{ route('frontend.wishlist.items.destroy', $product->id) }}" method="post">
+                                @csrf
+                                @method('DELETE')
+                                <button class="secondary-action" type="submit"><i class="fas fa-heart-broken"></i> Xóa</button>
+                            </form>
+                        </div>
+                    </article>
+                @empty
+                    <div class="empty-state empty-state--small">
+                        <strong>Chưa có sản phẩm yêu thích</strong>
+                        <span>Lưu lại các thiết bị bạn quan tâm để quay lại mua sau.</span>
+                    </div>
+                @endforelse
+            @endguest
             <a class="secondary-action" href="{{ route('frontend.shop') }}">Xem thêm sản phẩm</a>
         </div>
     </section>

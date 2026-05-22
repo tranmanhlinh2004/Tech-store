@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Support\AdminPermission;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -48,6 +49,161 @@ class AdminController extends Controller
             'topProducts' => $this->topSellingProducts(),
             'recentActivities' => $this->recentActivities(),
         ]);
+    }
+
+    public function users(Request $request)
+    {
+        $query = DB::table('users')
+            ->leftJoin('roles', 'roles.id', '=', 'users.role_id')
+            ->select([
+                'users.id',
+                'users.name',
+                'users.email',
+                'users.phone',
+                'users.status',
+                'users.created_at',
+                'users.role_id',
+                'roles.name as role_name',
+                'roles.description as role_description',
+            ]);
+        $keyword = trim((string) $request->query('q', ''));
+        $role = (string) $request->query('role', '');
+
+        if ($keyword !== '') {
+            $query->where(function ($query) use ($keyword): void {
+                $keyword = '%'.$keyword.'%';
+                $query->where('users.name', 'like', $keyword)
+                    ->orWhere('users.email', 'like', $keyword)
+                    ->orWhere('users.phone', 'like', $keyword)
+                    ->orWhere('roles.name', 'like', $keyword);
+            });
+        }
+
+        if ($role !== '') {
+            $query->where('roles.name', $role);
+        }
+
+        return view('admin.users.index', [
+            'users' => $query->orderByDesc('users.created_at')->limit(200)->get(),
+            'roles' => $this->roleOptions(),
+            'filters' => [
+                'q' => $keyword,
+                'role' => $role,
+            ],
+        ]);
+    }
+
+    public function userRoleUpdate(Request $request, int $id)
+    {
+        $user = DB::table('users')->where('id', $id)->first();
+        abort_if(! $user, 404);
+
+        if ((int) $user->id === (int) auth()->id()) {
+            return back()->withErrors(['role_id' => 'Không thể tự đổi vai trò hoặc trạng thái của tài khoản đang đăng nhập.']);
+        }
+
+        $data = $request->validate([
+            'role_id' => ['required', 'integer', 'exists:roles,id'],
+            'status' => ['required', 'string', Rule::in(['active', 'blocked'])],
+        ]);
+
+        DB::table('users')->where('id', $id)->update([
+            'role_id' => (int) $data['role_id'],
+            'status' => $data['status'],
+            'updated_at' => now(),
+        ]);
+
+        return back()->with('status', 'Đã cập nhật vai trò tài khoản.');
+    }
+
+    public function roles()
+    {
+        $roles = DB::table('roles')
+            ->leftJoin('users', 'users.role_id', '=', 'roles.id')
+            ->select([
+                'roles.id',
+                'roles.name',
+                'roles.description',
+                'roles.created_at',
+                DB::raw('COUNT(users.id) as users_count'),
+            ])
+            ->groupBy('roles.id', 'roles.name', 'roles.description', 'roles.created_at')
+            ->orderByRaw("CASE roles.name WHEN 'admin' THEN 0 WHEN 'manager' THEN 1 WHEN 'staff' THEN 2 WHEN 'customer' THEN 99 ELSE 50 END")
+            ->orderBy('roles.name')
+            ->get();
+
+        $rolePermissionMap = DB::table('role_permissions')
+            ->join('permissions', 'permissions.id', '=', 'role_permissions.permission_id')
+            ->select('role_permissions.role_id', 'permissions.name')
+            ->orderBy('permissions.name')
+            ->get()
+            ->groupBy('role_id')
+            ->map(fn ($rows) => $rows->pluck('name')->all());
+
+        return view('admin.roles.index', [
+            'roles' => $roles,
+            'permissionGroups' => $this->permissionGroups(),
+            'rolePermissionMap' => $rolePermissionMap,
+        ]);
+    }
+
+    public function roleStore(Request $request)
+    {
+        $request->merge([
+            'name' => Str::slug((string) $request->input('name'), '_'),
+        ]);
+
+        $data = $this->rolePayload($request);
+        $roleId = DB::table('roles')->insertGetId([
+            'name' => $data['name'],
+            'description' => $data['description'],
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->syncRolePermissions($roleId, $data['permissions']);
+
+        return redirect()->route('admin.roles.index')->with('status', 'Đã tạo vai trò mới.');
+    }
+
+    public function roleUpdate(Request $request, int $id)
+    {
+        $role = DB::table('roles')->where('id', $id)->first();
+        abort_if(! $role, 404);
+
+        $data = $this->rolePayload($request, $id);
+        $permissions = $role->name === 'admin'
+            ? AdminPermission::names()
+            : $data['permissions'];
+
+        DB::table('roles')->where('id', $id)->update([
+            'description' => $data['description'],
+            'updated_at' => now(),
+        ]);
+        $this->syncRolePermissions($id, $permissions);
+
+        return redirect()->route('admin.roles.index')->with('status', 'Đã cập nhật quyền cho vai trò '.$role->name.'.');
+    }
+
+    public function roleDestroy(int $id)
+    {
+        $role = DB::table('roles')->where('id', $id)->first();
+        abort_if(! $role, 404);
+
+        if (in_array($role->name, ['admin', 'customer'], true)) {
+            return back()->withErrors(['role' => 'Không thể xóa vai trò hệ thống.']);
+        }
+
+        if (DB::table('users')->where('role_id', $id)->exists()) {
+            return back()->withErrors(['role' => 'Vai trò này đang được gán cho user, không thể xóa.']);
+        }
+
+        DB::transaction(function () use ($id): void {
+            DB::table('role_permissions')->where('role_id', $id)->delete();
+            DB::table('roles')->where('id', $id)->delete();
+        });
+
+        return redirect()->route('admin.roles.index')->with('status', 'Đã xóa vai trò.');
     }
 
     public function products(Request $request)
@@ -1178,6 +1334,126 @@ class AdminController extends Controller
         $slug = Str::slug($slug ?: $name ?: '');
 
         return $slug !== '' ? $slug : 'item-'.time();
+    }
+
+    private function roleOptions()
+    {
+        return DB::table('roles')
+            ->orderByRaw("CASE name WHEN 'admin' THEN 0 WHEN 'manager' THEN 1 WHEN 'staff' THEN 2 WHEN 'customer' THEN 99 ELSE 50 END")
+            ->orderBy('name')
+            ->get();
+    }
+
+    private function rolePayload(Request $request, ?int $ignoreId = null): array
+    {
+        $this->ensurePermissionRows();
+        $permissionNames = $this->permissionNames();
+        $rules = [
+            'description' => ['nullable', 'string', 'max:255'],
+            'permissions' => ['nullable', 'array'],
+            'permissions.*' => ['string', Rule::in($permissionNames)],
+        ];
+
+        if (! $ignoreId) {
+            $rules['name'] = ['required', 'string', 'max:80', 'regex:/^[a-z0-9_]+$/', Rule::unique('roles', 'name')];
+        }
+
+        $messages = [
+            'name.regex' => 'Tên vai trò chỉ dùng chữ thường, số và dấu gạch dưới.',
+        ];
+        $data = $request->validate($rules, $messages);
+
+        return [
+            'name' => $data['name'] ?? null,
+            'description' => $data['description'] ?? null,
+            'permissions' => $data['permissions'] ?? [],
+        ];
+    }
+
+    private function permissionNames(): array
+    {
+        if (! Schema::hasTable('permissions')) {
+            return AdminPermission::names();
+        }
+
+        return DB::table('permissions')
+            ->orderBy('name')
+            ->pluck('name')
+            ->all();
+    }
+
+    private function permissionGroups(): array
+    {
+        $this->ensurePermissionRows();
+        $permissions = DB::table('permissions')->orderBy('name')->get()->keyBy('name');
+        $groups = [];
+        $catalogNames = [];
+
+        foreach (AdminPermission::groups() as $group => $catalogPermissions) {
+            foreach ($catalogPermissions as $name => $label) {
+                $catalogNames[] = $name;
+                $groups[$group][] = (object) [
+                    'name' => $name,
+                    'description' => $permissions->get($name)->description ?? $label,
+                ];
+            }
+        }
+
+        $customPermissions = $permissions
+            ->reject(fn ($permission, string $name): bool => in_array($name, $catalogNames, true))
+            ->values();
+
+        if ($customPermissions->isNotEmpty()) {
+            $groups['Khác'] = $customPermissions->all();
+        }
+
+        return $groups;
+    }
+
+    private function ensurePermissionRows(): void
+    {
+        if (! Schema::hasTable('permissions')) {
+            return;
+        }
+
+        $now = now();
+
+        foreach (AdminPermission::descriptions() as $name => $description) {
+            DB::table('permissions')->updateOrInsert(
+                ['name' => $name],
+                [
+                    'description' => $description,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]
+            );
+        }
+    }
+
+    private function syncRolePermissions(int $roleId, array $permissionNames): void
+    {
+        if (! Schema::hasTable('permissions') || ! Schema::hasTable('role_permissions')) {
+            return;
+        }
+
+        $permissionIds = DB::table('permissions')
+            ->whereIn('name', $permissionNames)
+            ->pluck('id')
+            ->map(fn ($id): int => (int) $id)
+            ->all();
+
+        DB::table('role_permissions')
+            ->where('role_id', $roleId)
+            ->when($permissionIds !== [], fn ($query) => $query->whereNotIn('permission_id', $permissionIds))
+            ->when($permissionIds === [], fn ($query) => $query)
+            ->delete();
+
+        foreach ($permissionIds as $permissionId) {
+            DB::table('role_permissions')->updateOrInsert([
+                'role_id' => $roleId,
+                'permission_id' => $permissionId,
+            ]);
+        }
     }
 
     private function countTable(string $table, ?callable $callback = null): int

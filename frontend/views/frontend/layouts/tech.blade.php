@@ -9,7 +9,7 @@
     <title>@yield('title', 'Đồ Công Nghệ')</title>
 
     <link rel="stylesheet" href="{{ asset('template/css/vendor.css') }}?v=20260518">
-    <link rel="stylesheet" href="{{ asset('template/css/home-redesign.css') }}?v=20260523-reviews">
+    <link rel="stylesheet" href="{{ asset('template/css/home-redesign.css') }}?v=20260523-account-db">
 </head>
 <body>
     <header class="site-header">
@@ -41,8 +41,9 @@
             </nav>
 
             <div class="nav-actions">
-                <a class="icon-button" href="{{ route('frontend.wishlist') }}" aria-label="Yêu thích">
-                    <i class="far fa-heart"></i>
+                <a class="icon-button icon-button--wishlist" href="{{ route('frontend.wishlist') }}" aria-label="Yêu thích">
+                    <i class="{{ ($wishlistCount ?? 0) > 0 ? 'fas' : 'far' }} fa-heart"></i>
+                    <span data-wishlist-count>{{ $wishlistCount ?? 0 }}</span>
                 </a>
                 <a class="icon-button icon-button--cart" href="{{ route('frontend.cart') }}" aria-label="Giỏ hàng">
                     <i class="fas fa-shopping-bag"></i>
@@ -92,7 +93,7 @@
     </div>
 
     @guest
-        <div class="cart-login-modal" id="cart-login-modal" role="dialog" aria-modal="true" aria-labelledby="cart-login-modal-title" hidden>
+        <div class="cart-login-modal" id="cart-login-modal" role="dialog" aria-modal="true" aria-labelledby="cart-login-modal-title" data-cart-login-open="{{ session('cart_login_required') ? '1' : '0' }}" hidden>
             <div class="cart-login-modal__backdrop" data-cart-login-close></div>
             <div class="cart-login-modal__dialog" role="document">
                 <button class="cart-login-modal__close" type="button" aria-label="Đóng" data-cart-login-close>
@@ -100,7 +101,7 @@
                 </button>
                 <span class="cart-login-modal__icon"><i class="fas fa-lock"></i></span>
                 <h2 id="cart-login-modal-title">Vui lòng đăng nhập</h2>
-                <p>Vui lòng đăng nhập để thêm giỏ hàng.</p>
+                <p>Vui lòng đăng nhập để thêm giỏ hàng hoặc lưu sản phẩm yêu thích.</p>
                 <div class="cart-login-modal__actions">
                     <a class="primary-action" href="{{ route('frontend.signin') }}">Đăng nhập</a>
                     <button class="secondary-action" type="button" data-cart-login-close>Tiếp tục xem</button>
@@ -257,9 +258,11 @@
                     }
                 });
 
-                @if (session('cart_login_required'))
+                var shouldOpenCartLoginModal = modal.dataset.cartLoginOpen === '1';
+
+                if (shouldOpenCartLoginModal) {
                     openCartLoginModal();
-                @endif
+                }
             })();
         </script>
     @endguest

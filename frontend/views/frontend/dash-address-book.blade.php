@@ -19,24 +19,32 @@
                     <h2 class="panel-title u-m-0">Địa chỉ đã lưu</h2>
                     <a class="primary-action" href="{{ url('/dash-address-add.html') }}">Thêm địa chỉ</a>
                 </div>
-                <div class="address-grid">
-                    <div class="info-card">
-                        <span class="status-badge">Mặc định</span>
-                        <h3>Nguyễn Minh Anh</h3>
-                        <p class="muted">123 Nguyễn Huệ, Quận 1, TP. Hồ Chí Minh</p>
-                        <div class="hero__actions">
-                            <a class="secondary-action" href="{{ url('/dash-address-edit.html') }}">Sửa</a>
-                        </div>
+                @if($addresses->isNotEmpty())
+                    <div class="address-grid">
+                        @foreach($addresses as $address)
+                            <div class="info-card">
+                                <span class="{{ $address->is_default ? 'status-badge' : 'status-badge status-badge--muted' }}">
+                                    {{ $address->is_default ? 'Mặc định' : $address->type_label }}
+                                </span>
+                                <h3>{{ $address->full_name }}</h3>
+                                <p class="muted">{{ $address->phone }}</p>
+                                <p class="muted">{{ $address->full_address }}</p>
+                                <div class="hero__actions">
+                                    <a class="secondary-action" href="{{ route('frontend.account.addresses.edit') }}">Sửa</a>
+                                    @unless($address->is_default)
+                                        <a class="secondary-action" href="{{ route('frontend.account.addresses') }}">Đặt mặc định</a>
+                                    @endunless
+                                </div>
+                            </div>
+                        @endforeach
                     </div>
-                    <div class="info-card">
-                        <span class="status-badge--muted status-badge">Văn phòng</span>
-                        <h3>Minh Anh</h3>
-                        <p class="muted">88 Lê Văn Sỹ, Quận 3, TP. Hồ Chí Minh</p>
-                        <div class="hero__actions">
-                            <a class="secondary-action" href="{{ url('/dash-address-make-default.html') }}">Đặt mặc định</a>
-                        </div>
+                @else
+                    <div class="empty-state empty-state--small">
+                        <strong>Chưa có địa chỉ</strong>
+                        <span>Thêm địa chỉ giao hàng để đặt hàng nhanh hơn.</span>
+                        <a class="primary-action" href="{{ url('/dash-address-add.html') }}">Thêm địa chỉ</a>
                     </div>
-                </div>
+                @endif
             </div>
         </div>
     </section>

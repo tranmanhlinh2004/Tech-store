@@ -47,6 +47,7 @@ class AppServiceProvider extends ServiceProvider
             }
 
             $cartItemCount = 0;
+            $wishlistCount = 0;
 
             if (auth()->check()) {
                 try {
@@ -64,11 +65,20 @@ class AppServiceProvider extends ServiceProvider
                 } catch (\Throwable) {
                     $cartItemCount = 0;
                 }
+
+                try {
+                    $wishlistCount = (int) DB::table('wishlists')
+                        ->where('user_id', auth()->id())
+                        ->count();
+                } catch (\Throwable) {
+                    $wishlistCount = 0;
+                }
             }
 
             $view->with([
                 'menuCategories' => $menuCategories,
                 'cartItemCount' => $cartItemCount,
+                'wishlistCount' => $wishlistCount,
             ]);
         });
     }

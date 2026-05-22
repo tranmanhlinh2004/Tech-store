@@ -24,7 +24,17 @@
                 <input type="hidden" name="product_id" value="{{ $product->id }}">
                 <button type="submit"><i class="fas fa-shopping-cart"></i> Thêm</button>
             </form>
-            <a href="{{ route('frontend.wishlist') }}" aria-label="Thêm {{ $product->name }} vào yêu thích"><i class="far fa-heart"></i></a>
+            <form class="wishlist-toggle-form" action="{{ ($product->is_wishlisted ?? false) ? route('frontend.wishlist.items.destroy', $product->id) : route('frontend.wishlist.items.store') }}" method="post" @guest data-cart-login-trigger @endguest>
+                @csrf
+                @if($product->is_wishlisted ?? false)
+                    @method('DELETE')
+                @else
+                    <input type="hidden" name="product_id" value="{{ $product->id }}">
+                @endif
+                <button class="wishlist-action {{ ($product->is_wishlisted ?? false) ? 'is-active' : '' }}" type="submit" aria-label="{{ ($product->is_wishlisted ?? false) ? 'Xóa '.$product->name.' khỏi yêu thích' : 'Thêm '.$product->name.' vào yêu thích' }}">
+                    <i class="{{ ($product->is_wishlisted ?? false) ? 'fas' : 'far' }} fa-heart"></i>
+                </button>
+            </form>
         </div>
     </div>
 </article>

@@ -14,7 +14,7 @@
         <div class="site-container account-layout">
             @include('frontend.partials.account-nav', ['active' => 'profile'])
 
-            <form class="account-panel stack" action="{{ url('/dash-my-profile.html') }}" method="get">
+            <form class="account-panel stack" action="{{ route('frontend.account.profile') }}" method="get">
                 <h2 class="panel-title">Thông tin cá nhân</h2>
                 <div class="form-grid">
                     <div class="field">

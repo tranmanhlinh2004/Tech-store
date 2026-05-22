@@ -22,24 +22,32 @@
             <div class="account-panel">
                 <h2 class="panel-title">Xin chào, {{ auth()->user()->name }}</h2>
                 <div class="stat-grid">
-                    <div class="mini-stat"><span>Đơn đang xử lý</span><strong>2</strong></div>
-                    <div class="mini-stat"><span>Sản phẩm yêu thích</span><strong>8</strong></div>
-                    <div class="mini-stat"><span>Bảo hành còn hiệu lực</span><strong>5</strong></div>
+                    <div class="mini-stat"><span>Đơn đang xử lý</span><strong>{{ $accountStats['processing_orders'] ?? 0 }}</strong></div>
+                    <div class="mini-stat"><span>Sản phẩm yêu thích</span><strong>{{ $accountStats['wishlist_products'] ?? 0 }}</strong></div>
+                    <div class="mini-stat"><span>Bảo hành còn hiệu lực</span><strong>{{ $accountStats['active_warranties'] ?? 0 }}</strong></div>
+                    <div class="mini-stat"><span>Tổng đơn hàng</span><strong>{{ $accountStats['total_orders'] ?? 0 }}</strong></div>
+                    <div class="mini-stat"><span>Thiết bị đã mua</span><strong>{{ $accountStats['purchased_items'] ?? 0 }}</strong></div>
+                    <div class="mini-stat"><span>Địa chỉ đã lưu</span><strong>{{ $accountStats['address_count'] ?? 0 }}</strong></div>
                 </div>
                 <h3 class="panel-title">Hoạt động gần đây</h3>
                 <div class="timeline">
-                    <div class="timeline-item">
-                        <i class="fas fa-truck"></i>
-                        <div><strong>Đơn #TS20260518 đang giao</strong><p class="muted">ROG Strix G16 dự kiến giao trong hôm nay.</p></div>
-                    </div>
-                    <div class="timeline-item">
-                        <i class="fas fa-heart"></i>
-                        <div><strong>Đã thêm UltraGear 27GP850 vào yêu thích</strong><p class="muted">Sản phẩm đang có ưu đãi màn hình gaming.</p></div>
-                    </div>
-                    <div class="timeline-item">
-                        <i class="fas fa-shield-alt"></i>
-                        <div><strong>Bảo hành AirPods Pro 2 còn 10 tháng</strong><p class="muted">Bạn có thể xem chi tiết trong hồ sơ thiết bị.</p></div>
-                    </div>
+                    @forelse($recentActivities as $activity)
+                        <a class="timeline-item timeline-item--link" href="{{ $activity->url }}">
+                            <i class="{{ $activity->icon }}"></i>
+                            <div>
+                                <strong>{{ $activity->title }}</strong>
+                                <p class="muted">{{ $activity->meta }}</p>
+                                @if($activity->display_time)
+                                    <span class="muted">{{ $activity->display_time }}</span>
+                                @endif
+                            </div>
+                        </a>
+                    @empty
+                        <div class="empty-state empty-state--small">
+                            <strong>Chưa có hoạt động nào</strong>
+                            <span>Đơn hàng, sản phẩm yêu thích và bảo hành sẽ xuất hiện tại đây.</span>
+                        </div>
+                    @endforelse
                 </div>
             </div>
         </div>

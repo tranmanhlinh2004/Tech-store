@@ -89,9 +89,9 @@
                     <div><span>Vận chuyển</span><strong>Miễn phí</strong></div>
                     <div class="summary-total"><span>Tổng cộng</span><strong data-cart-summary="total">{{ $formatPrice($cartSummary['total']) }}</strong></div>
                 </div>
-                <div data-cart-summary-action data-shop-url="{{ route('frontend.shop') }}" data-checkout-url="{{ route('frontend.checkout') }}">
+                <div data-cart-summary-action data-shop-url="{{ route('frontend.shop') }}" data-checkout-url="{{ route('frontend.checkout', ['source' => 'cart']) }}">
                     @if($cartItems->isNotEmpty())
-                        <a class="primary-action" href="{{ route('frontend.checkout') }}">Thanh toán</a>
+                        <a class="primary-action" href="{{ route('frontend.checkout', ['source' => 'cart']) }}">Thanh toán</a>
                     @else
                         <a class="secondary-action" href="{{ route('frontend.shop') }}">Chọn sản phẩm</a>
                     @endif

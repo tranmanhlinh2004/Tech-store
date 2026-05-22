@@ -14,16 +14,16 @@
         <div class="site-container account-layout">
             @include('frontend.partials.account-nav', ['active' => 'address'])
 
-            <form class="account-panel stack" action="{{ url('/dash-address-book.html') }}" method="get">
+            <form class="account-panel stack" action="{{ route('frontend.account.addresses') }}" method="get">
                 <h2 class="panel-title">Thông tin địa chỉ</h2>
                 <div class="form-grid">
                     <div class="field">
                         <label for="address-name">Người nhận</label>
-                        <input id="address-name" type="text" placeholder="Nguyễn Văn A">
+                        <input id="address-name" type="text" placeholder="{{ auth()->user()->name }}">
                     </div>
                     <div class="field">
                         <label for="address-phone">Số điện thoại</label>
-                        <input id="address-phone" type="tel" placeholder="0900 000 000">
+                        <input id="address-phone" type="tel" placeholder="{{ auth()->user()->phone ?: '0900 000 000' }}">
                     </div>
                     <div class="field field--full">
                         <label for="address-line">Địa chỉ</label>

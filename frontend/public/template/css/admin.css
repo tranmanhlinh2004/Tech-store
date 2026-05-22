@@ -595,6 +595,10 @@ body.admin-body {
     gap: 16px;
 }
 
+.u-m-t-18 {
+    margin-top: 18px;
+}
+
 .admin-field--full {
     grid-column: 1 / -1;
 }
@@ -682,6 +686,58 @@ body.admin-body {
     font-weight: 800;
 }
 
+.admin-checks--stacked {
+    display: grid;
+    gap: 10px;
+}
+
+.admin-checks--stacked label {
+    align-items: flex-start;
+    line-height: 1.35;
+}
+
+.admin-checks--stacked small {
+    display: block;
+    margin-top: 2px;
+    color: var(--admin-muted);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.admin-role-grid {
+    display: grid;
+    gap: 18px;
+    margin-top: 18px;
+}
+
+.admin-role-card {
+    display: grid;
+    gap: 14px;
+}
+
+.admin-permission-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.admin-permission-grid--compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-permission-card {
+    border: 1px solid var(--admin-line);
+    border-radius: 8px;
+    padding: 14px;
+    background: #f8fafc;
+}
+
+.admin-permission-card h3 {
+    margin: 0 0 12px;
+    color: #0f172a;
+    font-size: 15px;
+}
+
 .admin-help,
 .admin-muted {
     color: var(--admin-muted);
@@ -737,6 +793,8 @@ body.admin-body {
 
     .admin-stats,
     .admin-form-grid,
+    .admin-permission-grid,
+    .admin-permission-grid--compact,
     .admin-dashboard-grid,
     .admin-sales-summary,
     .admin-detail-grid {

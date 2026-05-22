@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', 'Admin') | Đồ Công Nghệ</title>
     <link rel="stylesheet" href="{{ asset('template/css/vendor.css') }}?v=20260518">
-    <link rel="stylesheet" href="{{ asset('template/css/admin.css') }}?v=20260523-admin-upload">
+    <link rel="stylesheet" href="{{ asset('template/css/admin.css') }}?v=20260523-admin-rbac">
 </head>
 <body class="admin-body">
     @php
@@ -13,26 +13,38 @@
         $adminName = $adminUser?->name ?: 'Admin';
         $adminRole = $adminUser?->role?->name ?: 'admin';
         $adminInitial = mb_strtoupper(mb_substr($adminName, 0, 1));
+        $adminCan = fn (string $permission): bool => $adminUser?->hasPermission($permission) ?? false;
+        $adminNavItems = [
+            ['route' => 'admin.dashboard', 'active' => 'admin.dashboard', 'permission' => 'dashboard.view', 'icon' => 'fa-chart-line', 'label' => 'Dashboard'],
+            ['route' => 'admin.users.index', 'active' => 'admin.users.*', 'permission' => 'users.view', 'icon' => 'fa-users', 'label' => 'Tài khoản'],
+            ['route' => 'admin.roles.index', 'active' => 'admin.roles.*', 'permission' => 'roles.manage', 'icon' => 'fa-user-shield', 'label' => 'Vai trò & quyền'],
+            ['route' => 'admin.products.index', 'active' => 'admin.products.*', 'permission' => 'products.view', 'icon' => 'fa-box', 'label' => 'Sản phẩm'],
+            ['route' => 'admin.product-images.index', 'active' => 'admin.product-images.*', 'permission' => 'products.update', 'icon' => 'fa-photo-video', 'label' => 'Ảnh sản phẩm'],
+            ['route' => 'admin.product-specifications.index', 'active' => 'admin.product-specifications.*', 'permission' => 'products.update', 'icon' => 'fa-tasks', 'label' => 'Thông số kỹ thuật'],
+            ['route' => 'admin.orders.index', 'active' => 'admin.orders.*', 'permission' => 'orders.view', 'icon' => 'fa-receipt', 'label' => 'Đơn hàng'],
+            ['route' => 'admin.coupons.index', 'active' => 'admin.coupons.*', 'permission' => 'coupons.manage', 'icon' => 'fa-tags', 'label' => 'Mã giảm giá'],
+            ['route' => 'admin.reviews.index', 'active' => 'admin.reviews.*', 'permission' => 'reviews.manage', 'icon' => 'fa-star-half-alt', 'label' => 'Đánh giá'],
+            ['route' => 'admin.categories.index', 'active' => 'admin.categories.*', 'permission' => 'categories.manage', 'icon' => 'fa-layer-group', 'label' => 'Danh mục'],
+            ['route' => 'admin.brands.index', 'active' => 'admin.brands.*', 'permission' => 'brands.manage', 'icon' => 'fa-copyright', 'label' => 'Thương hiệu'],
+            ['route' => 'admin.banners.index', 'active' => 'admin.banners.*', 'permission' => 'banners.manage', 'icon' => 'fa-images', 'label' => 'Banner'],
+        ];
+        $adminHomeItem = collect($adminNavItems)->first(fn (array $item): bool => $adminCan($item['permission']));
+        $adminHomeHref = $adminHomeItem ? route($adminHomeItem['route']) : route('frontend.home');
     @endphp
 
     <div class="admin-shell" id="adminShell">
         <aside class="admin-sidebar">
-            <a class="admin-brand" href="{{ route('admin.dashboard') }}" title="Admin Shop">
+            <a class="admin-brand" href="{{ $adminHomeHref }}" title="Admin Shop">
                 <span class="admin-brand__icon"><i class="fas fa-microchip"></i></span>
                 <strong>Admin Shop</strong>
             </a>
 
             <nav class="admin-nav" aria-label="Admin">
-                <a class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}" title="Dashboard"><i class="fas fa-chart-line"></i> <span>Dashboard</span></a>
-                <a class="{{ request()->routeIs('admin.products.*') ? 'active' : '' }}" href="{{ route('admin.products.index') }}" title="Sản phẩm"><i class="fas fa-box"></i> <span>Sản phẩm</span></a>
-                <a class="{{ request()->routeIs('admin.product-images.*') ? 'active' : '' }}" href="{{ route('admin.product-images.index') }}" title="Ảnh sản phẩm"><i class="fas fa-photo-video"></i> <span>Ảnh sản phẩm</span></a>
-                <a class="{{ request()->routeIs('admin.product-specifications.*') ? 'active' : '' }}" href="{{ route('admin.product-specifications.index') }}" title="Thông số kỹ thuật"><i class="fas fa-tasks"></i> <span>Thông số kỹ thuật</span></a>
-                <a class="{{ request()->routeIs('admin.orders.*') ? 'active' : '' }}" href="{{ route('admin.orders.index') }}" title="Đơn hàng"><i class="fas fa-receipt"></i> <span>Đơn hàng</span></a>
-                <a class="{{ request()->routeIs('admin.coupons.*') ? 'active' : '' }}" href="{{ route('admin.coupons.index') }}" title="Mã giảm giá"><i class="fas fa-tags"></i> <span>Mã giảm giá</span></a>
-                <a class="{{ request()->routeIs('admin.reviews.*') ? 'active' : '' }}" href="{{ route('admin.reviews.index') }}" title="Đánh giá"><i class="fas fa-star-half-alt"></i> <span>Đánh giá</span></a>
-                <a class="{{ request()->routeIs('admin.categories.*') ? 'active' : '' }}" href="{{ route('admin.categories.index') }}" title="Danh mục"><i class="fas fa-layer-group"></i> <span>Danh mục</span></a>
-                <a class="{{ request()->routeIs('admin.brands.*') ? 'active' : '' }}" href="{{ route('admin.brands.index') }}" title="Thương hiệu"><i class="fas fa-copyright"></i> <span>Thương hiệu</span></a>
-                <a class="{{ request()->routeIs('admin.banners.*') ? 'active' : '' }}" href="{{ route('admin.banners.index') }}" title="Banner"><i class="fas fa-images"></i> <span>Banner</span></a>
+                @foreach($adminNavItems as $item)
+                    @if($adminCan($item['permission']))
+                        <a class="{{ request()->routeIs($item['active']) ? 'active' : '' }}" href="{{ route($item['route']) }}" title="{{ $item['label'] }}"><i class="fas {{ $item['icon'] }}"></i> <span>{{ $item['label'] }}</span></a>
+                    @endif
+                @endforeach
             </nav>
 
             <form class="admin-sidebar__logout" action="{{ route('frontend.logout') }}" method="post">

@@ -16,18 +16,27 @@
 
             <form class="account-panel stack" action="{{ url('/dash-my-order.html') }}" method="get">
                 <h2 class="panel-title">Thông tin hủy đơn</h2>
-                <div class="field">
-                    <label for="cancel-order">Mã đơn</label>
-                    <select id="cancel-order">
-                        <option>#TS20260518 - ROG Strix G16</option>
-                        <option>#TS20260517 - AirPods Pro 2</option>
-                    </select>
-                </div>
-                <div class="field">
-                    <label for="cancel-reason">Lý do</label>
-                    <textarea id="cancel-reason" placeholder="Mô tả lý do hủy đơn"></textarea>
-                </div>
-                <button class="danger-action" type="submit">Gửi yêu cầu hủy</button>
+                @if($cancelableOrders->isNotEmpty())
+                    <div class="field">
+                        <label for="cancel-order">Mã đơn</label>
+                        <select id="cancel-order" name="order">
+                            @foreach($cancelableOrders as $order)
+                                <option value="{{ $order->id }}">#{{ $order->order_code }} - {{ $order->item_summary }} - {{ ucfirst($order->status_label) }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="cancel-reason">Lý do</label>
+                        <textarea id="cancel-reason" name="reason" placeholder="Mô tả lý do hủy đơn"></textarea>
+                    </div>
+                    <button class="danger-action" type="submit">Gửi yêu cầu hủy</button>
+                @else
+                    <div class="empty-state empty-state--small">
+                        <strong>Không có đơn có thể hủy</strong>
+                        <span>Chỉ các đơn đang chờ xác nhận, đã xác nhận hoặc đang xử lý mới có thể gửi yêu cầu hủy.</span>
+                        <a class="secondary-action" href="{{ route('frontend.account.orders') }}">Xem đơn hàng</a>
+                    </div>
+                @endif
             </form>
         </div>
     </section>

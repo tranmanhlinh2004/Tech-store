@@ -86,7 +86,24 @@
                         <input type="hidden" name="product_id" value="{{ $product->id }}">
                         <button class="primary-action" type="submit"><i class="fas fa-shopping-cart"></i> Thêm vào giỏ</button>
                     </form>
-                    <a class="secondary-action" href="{{ route('frontend.checkout') }}">Mua ngay</a>
+                    <form class="cart-add-form" action="{{ route('frontend.checkout.buy-now') }}" method="post" @guest data-cart-login-trigger @endguest>
+                        @csrf
+                        <input type="hidden" name="product_id" value="{{ $product->id }}">
+                        <input type="hidden" name="quantity" value="1">
+                        <button class="secondary-action" type="submit">Mua ngay</button>
+                    </form>
+                    <form class="cart-add-form" action="{{ ($product->is_wishlisted ?? false) ? route('frontend.wishlist.items.destroy', $product->id) : route('frontend.wishlist.items.store') }}" method="post" @guest data-cart-login-trigger @endguest>
+                        @csrf
+                        @if($product->is_wishlisted ?? false)
+                            @method('DELETE')
+                        @else
+                            <input type="hidden" name="product_id" value="{{ $product->id }}">
+                        @endif
+                        <button class="secondary-action wishlist-detail-action {{ ($product->is_wishlisted ?? false) ? 'is-active' : '' }}" type="submit">
+                            <i class="{{ ($product->is_wishlisted ?? false) ? 'fas' : 'far' }} fa-heart"></i>
+                            {{ ($product->is_wishlisted ?? false) ? 'Đã yêu thích' : 'Yêu thích' }}
+                        </button>
+                    </form>
                 </div>
 
                 <div class="spec-grid u-m-t-18">
@@ -135,7 +152,11 @@
                         <span>Khách hàng nói gì</span>
                         <h2 class="panel-title">Bình luận và đánh giá sản phẩm</h2>
                     </div>
-                    <a class="secondary-action" href="#review-form"><i class="fas fa-pen"></i> Viết đánh giá</a>
+                    @auth
+                        <a class="secondary-action" href="#review-form"><i class="fas fa-pen"></i> Viết đánh giá</a>
+                    @else
+                        <a class="secondary-action" href="{{ route('frontend.signin') }}"><i class="fas fa-lock"></i> Đăng nhập để đánh giá</a>
+                    @endauth
                 </div>
 
                 <div class="review-summary">
@@ -199,61 +220,53 @@
             </div>
 
             <aside class="review-form-card" id="review-form">
-                <h2 class="panel-title">Gửi đánh giá của bạn</h2>
-                <form action="{{ route('frontend.product.reviews.store', $product->id) }}" method="post">
-                    @csrf
-                    <div class="field">
-                        <label>Chọn số sao</label>
-                        <div class="rating-input" role="radiogroup" aria-label="Chọn số sao đánh giá">
-                            @for($star = 5; $star >= 1; $star--)
-                                <input id="review-rating-{{ $star }}" type="radio" name="rating" value="{{ $star }}" @checked((int) old('rating', 5) === $star)>
-                                <label for="review-rating-{{ $star }}" title="{{ $star }} sao"><i class="fas fa-star"></i></label>
-                            @endfor
+                @auth
+                    <h2 class="panel-title">Gửi đánh giá của bạn</h2>
+                    <form action="{{ route('frontend.product.reviews.store', $product->id) }}" method="post">
+                        @csrf
+                        <div class="field">
+                            <label>Chọn số sao</label>
+                            <div class="rating-input" role="radiogroup" aria-label="Chọn số sao đánh giá">
+                                @for($star = 5; $star >= 1; $star--)
+                                    <input id="review-rating-{{ $star }}" type="radio" name="rating" value="{{ $star }}" @checked((int) old('rating', 5) === $star)>
+                                    <label for="review-rating-{{ $star }}" title="{{ $star }} sao"><i class="fas fa-star"></i></label>
+                                @endfor
+                            </div>
+                            @error('rating')
+                                <p class="field-error">{{ $message }}</p>
+                            @enderror
                         </div>
-                        @error('rating')
-                            <p class="field-error">{{ $message }}</p>
-                        @enderror
-                    </div>
 
-                    @guest
-                        <div class="form-grid">
-                            <div class="field">
-                                <label for="reviewer_name">Tên của bạn</label>
-                                <input id="reviewer_name" name="reviewer_name" type="text" value="{{ old('reviewer_name') }}" autocomplete="name" required>
-                                @error('reviewer_name')
-                                    <p class="field-error">{{ $message }}</p>
-                                @enderror
-                            </div>
-                            <div class="field">
-                                <label for="reviewer_email">Email</label>
-                                <input id="reviewer_email" name="reviewer_email" type="email" value="{{ old('reviewer_email') }}" autocomplete="email" required>
-                                @error('reviewer_email')
-                                    <p class="field-error">{{ $message }}</p>
-                                @enderror
-                            </div>
-                        </div>
-                    @else
                         <p class="review-auth-note"><i class="fas fa-user-check"></i> Đánh giá dưới tên {{ auth()->user()->name }}.</p>
-                    @endguest
 
-                    <div class="field">
-                        <label for="review_title">Tiêu đề</label>
-                        <input id="review_title" name="title" type="text" value="{{ old('title') }}" maxlength="120" placeholder="Ví dụ: Sản phẩm đúng nhu cầu">
-                        @error('title')
-                            <p class="field-error">{{ $message }}</p>
-                        @enderror
+                        <div class="field">
+                            <label for="review_title">Tiêu đề</label>
+                            <input id="review_title" name="title" type="text" value="{{ old('title') }}" maxlength="120" placeholder="Ví dụ: Sản phẩm đúng nhu cầu">
+                            @error('title')
+                                <p class="field-error">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div class="field">
+                            <label for="review_comment">Bình luận</label>
+                            <textarea id="review_comment" name="comment" required placeholder="Chia sẻ cảm nhận thực tế, điểm hài lòng hoặc điều cần cải thiện...">{{ old('comment') }}</textarea>
+                            @error('comment')
+                                <p class="field-error">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <button class="primary-action" type="submit"><i class="fas fa-paper-plane"></i> Gửi đánh giá</button>
+                    </form>
+                @else
+                    <div class="review-login-panel">
+                        <h2 class="panel-title">Đăng nhập để đánh giá</h2>
+                        <p>Khách chưa đăng nhập vẫn xem được toàn bộ đánh giá, nhưng cần đăng nhập tài khoản để gửi đánh giá sản phẩm.</p>
+                        <div class="review-login-actions">
+                            <a class="primary-action" href="{{ route('frontend.signin') }}"><i class="fas fa-sign-in-alt"></i> Đăng nhập</a>
+                            <a class="secondary-action" href="{{ route('frontend.signup') }}">Tạo tài khoản</a>
+                        </div>
                     </div>
-
-                    <div class="field">
-                        <label for="review_comment">Bình luận</label>
-                        <textarea id="review_comment" name="comment" required placeholder="Chia sẻ cảm nhận thực tế, điểm hài lòng hoặc điều cần cải thiện...">{{ old('comment') }}</textarea>
-                        @error('comment')
-                            <p class="field-error">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <button class="primary-action" type="submit"><i class="fas fa-paper-plane"></i> Gửi đánh giá</button>
-                </form>
+                @endauth
             </aside>
         </div>
     </section>
