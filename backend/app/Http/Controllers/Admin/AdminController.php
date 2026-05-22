@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -156,19 +157,29 @@ class AdminController extends Controller
     {
         $data = $request->validate([
             'product_id' => ['required', 'integer', 'exists:products,id'],
-            'thumbnail' => ['nullable', 'string', 'max:255'],
-            'image_paths' => ['nullable', 'string'],
+            'current_thumbnail' => ['nullable', 'string', 'max:255'],
+            'current_image_paths' => ['nullable', 'string'],
+            'thumbnail_file' => $this->imageUploadRules(),
+            'image_files' => ['nullable', 'array'],
+            'image_files.*' => $this->imageUploadRules(),
         ]);
 
         DB::transaction(function () use ($data, $request): void {
+            $thumbnail = $this->storeTemplateUploadIfPresent($request, 'thumbnail_file', 'products')
+                ?: ($data['current_thumbnail'] ?? null);
+            $imagePaths = array_merge(
+                $this->lines((string) ($data['current_image_paths'] ?? '')),
+                $this->storeTemplateUploads($request, 'image_files', 'products')
+            );
+
             DB::table('products')
                 ->where('id', $data['product_id'])
                 ->update([
-                    'thumbnail' => $data['thumbnail'] ?? null,
+                    'thumbnail' => $thumbnail,
                     'updated_at' => now(),
                 ]);
 
-            $this->syncOnlyProductImages((int) $data['product_id'], $data['thumbnail'] ?? null, (string) $request->input('image_paths', ''));
+            $this->syncOnlyProductImages((int) $data['product_id'], $thumbnail, implode(PHP_EOL, $imagePaths));
         });
 
         return redirect()
@@ -882,9 +893,16 @@ class AdminController extends Controller
             'sale_price' => ['nullable', 'numeric', 'min:0'],
             'quantity' => ['nullable', 'integer', 'min:0'],
             'warranty_months' => ['nullable', 'integer', 'min:0'],
-            'thumbnail' => ['nullable', 'string', 'max:255'],
+            'current_thumbnail' => ['nullable', 'string', 'max:255'],
+            'current_image_paths' => ['nullable', 'string'],
+            'thumbnail_file' => $this->imageUploadRules(),
+            'image_files' => ['nullable', 'array'],
+            'image_files.*' => $this->imageUploadRules(),
             'status' => ['required', Rule::in(['active', 'inactive', 'out_of_stock'])],
         ]);
+
+        $thumbnail = $this->storeTemplateUploadIfPresent($request, 'thumbnail_file', 'products')
+            ?: ($data['current_thumbnail'] ?? null);
 
         return [
             'category_id' => (int) $data['category_id'],
@@ -899,7 +917,7 @@ class AdminController extends Controller
             'sale_price' => $request->filled('sale_price') ? (float) $data['sale_price'] : null,
             'quantity' => (int) ($data['quantity'] ?? 0),
             'warranty_months' => (int) ($data['warranty_months'] ?? 0),
-            'thumbnail' => $data['thumbnail'] ?? null,
+            'thumbnail' => $thumbnail,
             'status' => $data['status'],
             'is_featured' => $request->boolean('is_featured'),
             'is_free_shipping' => $request->boolean('is_free_shipping'),
@@ -943,15 +961,19 @@ class AdminController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['required', 'string', 'max:255', $slugRule],
             'description' => ['nullable', 'string'],
-            'image' => ['nullable', 'string', 'max:255'],
+            'current_image' => ['nullable', 'string', 'max:255'],
+            'image_file' => $this->imageUploadRules(),
         ]);
+
+        $image = $this->storeTemplateUploadIfPresent($request, 'image_file', 'categories')
+            ?: ($data['current_image'] ?? null);
 
         return [
             'parent_id' => $data['parent_id'] ?? null,
             'name' => $data['name'],
             'slug' => $data['slug'],
             'description' => $data['description'] ?? null,
-            'image' => $data['image'] ?? null,
+            'image' => $image,
             'status' => $request->boolean('status'),
             'updated_at' => now(),
         ];
@@ -972,14 +994,18 @@ class AdminController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['required', 'string', 'max:255', $slugRule],
-            'logo' => ['nullable', 'string', 'max:255'],
+            'current_logo' => ['nullable', 'string', 'max:255'],
+            'logo_file' => $this->imageUploadRules(),
             'description' => ['nullable', 'string'],
         ]);
+
+        $logo = $this->storeTemplateUploadIfPresent($request, 'logo_file', 'brands')
+            ?: ($data['current_logo'] ?? null);
 
         return [
             'name' => $data['name'],
             'slug' => $data['slug'],
-            'logo' => $data['logo'] ?? null,
+            'logo' => $logo,
             'description' => $data['description'] ?? null,
             'status' => $request->boolean('status'),
             'updated_at' => now(),
@@ -990,15 +1016,19 @@ class AdminController extends Controller
     {
         $data = $request->validate([
             'title' => ['required', 'string', 'max:255'],
-            'image' => ['required', 'string', 'max:255'],
+            'current_image' => ['nullable', 'string', 'max:255'],
+            'image_file' => $this->imageUploadRules('current_image'),
             'link' => ['nullable', 'string', 'max:255'],
             'position' => ['nullable', 'string', 'max:50'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
         ]);
 
+        $image = $this->storeTemplateUploadIfPresent($request, 'image_file', 'banners')
+            ?: ($data['current_image'] ?? null);
+
         return [
             'title' => $data['title'],
-            'image' => $data['image'],
+            'image' => $image,
             'link' => $data['link'] ?? null,
             'position' => $data['position'] ?? null,
             'sort_order' => (int) ($data['sort_order'] ?? 0),
@@ -1024,7 +1054,12 @@ class AdminController extends Controller
             ];
         }
 
-        foreach ($this->lines((string) $request->input('image_paths', '')) as $imagePath) {
+        $imagePaths = array_merge(
+            $this->lines((string) $request->input('current_image_paths', '')),
+            $this->storeTemplateUploads($request, 'image_files', 'products')
+        );
+
+        foreach ($imagePaths as $imagePath) {
             if ($imagePath === $thumbnail) {
                 continue;
             }
@@ -1077,6 +1112,65 @@ class AdminController extends Controller
             ->unique()
             ->values()
             ->all();
+    }
+
+    private function imageUploadRules(?string $requiredWithout = null): array
+    {
+        $presenceRule = $requiredWithout ? 'required_without:'.$requiredWithout : 'nullable';
+
+        return [$presenceRule, 'file', 'mimes:jpg,jpeg,png,webp,gif', 'max:4096'];
+    }
+
+    private function storeTemplateUploadIfPresent(Request $request, string $field, string $folder): ?string
+    {
+        if (! $request->hasFile($field)) {
+            return null;
+        }
+
+        $file = $request->file($field);
+
+        return $file instanceof UploadedFile ? $this->storeTemplateUpload($file, $folder) : null;
+    }
+
+    private function storeTemplateUploads(Request $request, string $field, string $folder): array
+    {
+        if (! $request->hasFile($field)) {
+            return [];
+        }
+
+        $files = $request->file($field);
+        $files = is_array($files) ? $files : [$files];
+
+        return collect($files)
+            ->filter(fn ($file): bool => $file instanceof UploadedFile)
+            ->map(fn (UploadedFile $file): string => $this->storeTemplateUpload($file, $folder))
+            ->values()
+            ->all();
+    }
+
+    private function storeTemplateUpload(UploadedFile $file, string $folder): string
+    {
+        $basePath = realpath(base_path('../frontend/public/template/images'));
+
+        if ($basePath === false) {
+            throw ValidationException::withMessages(['image_file' => 'Không tìm thấy thư mục lưu ảnh.']);
+        }
+
+        $safeFolder = trim(str_replace(['\\', '..'], '/', $folder), '/');
+        $targetDir = $basePath.DIRECTORY_SEPARATOR.'uploads'.DIRECTORY_SEPARATOR.$safeFolder;
+
+        if (! is_dir($targetDir) && ! mkdir($targetDir, 0755, true) && ! is_dir($targetDir)) {
+            throw ValidationException::withMessages(['image_file' => 'Không thể tạo thư mục lưu ảnh.']);
+        }
+
+        $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+        $name = Str::slug($originalName) ?: 'image';
+        $extension = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'jpg');
+        $filename = $name.'-'.now()->format('YmdHis').'-'.Str::lower(Str::random(8)).'.'.$extension;
+
+        $file->move($targetDir, $filename);
+
+        return 'template/images/uploads/'.$safeFolder.'/'.$filename;
     }
 
     private function slug(?string $slug, ?string $name): string

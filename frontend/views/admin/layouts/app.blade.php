@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', 'Admin') | Đồ Công Nghệ</title>
     <link rel="stylesheet" href="{{ asset('template/css/vendor.css') }}?v=20260518">
-    <link rel="stylesheet" href="{{ asset('template/css/admin.css') }}?v=20260523-admin-sales">
+    <link rel="stylesheet" href="{{ asset('template/css/admin.css') }}?v=20260523-admin-upload">
 </head>
 <body class="admin-body">
     @php

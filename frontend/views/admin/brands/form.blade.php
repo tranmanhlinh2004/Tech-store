@@ -9,7 +9,7 @@
 @section('page_title', $isEdit ? 'Sửa thương hiệu' : 'Thêm thương hiệu')
 
 @section('content')
-    <form class="admin-panel" action="{{ $action }}" method="post">
+    <form class="admin-panel" action="{{ $action }}" method="post" enctype="multipart/form-data">
         @csrf
         @if($isEdit)
             @method('PUT')
@@ -27,8 +27,16 @@
             </div>
 
             <div class="admin-field admin-field--full">
-                <label for="logo">Logo</label>
-                <input id="logo" name="logo" value="{{ old('logo', $brand->logo ?? '') }}" placeholder="template/images/brand/...">
+                <label for="logo_file">Logo</label>
+                <input type="hidden" name="current_logo" value="{{ old('current_logo', $brand->logo ?? '') }}">
+                <input id="logo_file" name="logo_file" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
+                @if($brand?->logo)
+                    <div class="admin-current-image">
+                        <img src="{{ asset($brand->logo) }}" alt="{{ $brand->name }}">
+                        <span>{{ $brand->logo }}</span>
+                    </div>
+                @endif
+                <span class="admin-help">Để trống nếu muốn giữ logo hiện tại.</span>
             </div>
 
             <div class="admin-field admin-field--full">

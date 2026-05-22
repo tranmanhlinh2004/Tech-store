@@ -9,7 +9,7 @@
     <title>@yield('title', 'Đồ Công Nghệ')</title>
 
     <link rel="stylesheet" href="{{ asset('template/css/vendor.css') }}?v=20260518">
-    <link rel="stylesheet" href="{{ asset('template/css/home-redesign.css') }}?v=20260521-toast-slide">
+    <link rel="stylesheet" href="{{ asset('template/css/home-redesign.css') }}?v=20260523-reviews">
 </head>
 <body>
     <header class="site-header">

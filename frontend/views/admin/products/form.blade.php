@@ -9,7 +9,7 @@
 @section('page_title', $isEdit ? 'Sửa sản phẩm' : 'Thêm sản phẩm')
 
 @section('content')
-    <form class="admin-panel" action="{{ $action }}" method="post">
+    <form class="admin-panel" action="{{ $action }}" method="post" enctype="multipart/form-data">
         @csrf
         @if($isEdit)
             @method('PUT')
@@ -86,8 +86,16 @@
             </div>
 
             <div class="admin-field">
-                <label for="thumbnail">Ảnh đại diện</label>
-                <input id="thumbnail" name="thumbnail" value="{{ old('thumbnail', $product->thumbnail ?? '') }}" placeholder="template/images/product/...">
+                <label for="thumbnail_file">Ảnh đại diện</label>
+                <input type="hidden" name="current_thumbnail" value="{{ old('current_thumbnail', $product->thumbnail ?? '') }}">
+                <input id="thumbnail_file" name="thumbnail_file" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
+                @if($product?->thumbnail)
+                    <div class="admin-current-image">
+                        <img src="{{ asset($product->thumbnail) }}" alt="{{ $product->name }}">
+                        <span>{{ $product->thumbnail }}</span>
+                    </div>
+                @endif
+                <span class="admin-help">Chọn file JPG, PNG, WEBP hoặc GIF từ máy. Để trống nếu muốn giữ ảnh hiện tại.</span>
             </div>
 
             <div class="admin-field admin-field--full">
@@ -107,9 +115,10 @@
             </div>
 
             <div class="admin-field admin-field--full">
-                <label for="image_paths">Ảnh phụ</label>
-                <textarea id="image_paths" name="image_paths" placeholder="template/images/product/...">{{ old('image_paths', $imagePathText) }}</textarea>
-                <span class="admin-help">Mỗi dòng một đường dẫn ảnh trong thư mục public template.</span>
+                <label for="image_files">Ảnh phụ</label>
+                <textarea name="current_image_paths" hidden>{{ old('current_image_paths', $imagePathText) }}</textarea>
+                <input id="image_files" name="image_files[]" type="file" accept="image/png,image/jpeg,image/webp,image/gif" multiple>
+                <span class="admin-help">Có thể chọn nhiều file cùng lúc. File mới sẽ được thêm vào danh sách ảnh phụ hiện tại.</span>
             </div>
 
             <div class="admin-field admin-field--full">

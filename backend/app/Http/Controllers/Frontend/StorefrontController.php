@@ -7,8 +7,10 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Throwable;
 
@@ -419,16 +421,59 @@ class StorefrontController extends Controller
                 ->get();
 
             $relatedProducts = $this->relatedProducts($product);
+            $reviewData = $this->productReviewData((int) $product->id);
 
             return view('frontend.product-detail', [
                 'product' => $product,
                 'productImages' => $images,
                 'specifications' => $specifications,
                 'relatedProducts' => $relatedProducts,
+                'reviews' => $reviewData['reviews'],
+                'reviewSummary' => $reviewData['summary'],
             ]);
         } catch (Throwable) {
             abort(404);
         }
+    }
+
+    public function storeReview(Request $request, int $product): RedirectResponse
+    {
+        if (! Schema::hasTable('reviews')) {
+            return back()->with('error', 'Chức năng đánh giá chưa sẵn sàng.');
+        }
+
+        $productRow = DB::table('products')
+            ->where('id', $product)
+            ->where('status', 'active')
+            ->first(['id', 'slug']);
+
+        if (! $productRow) {
+            abort(404);
+        }
+
+        $user = $request->user();
+        $validated = $request->validate([
+            'rating' => ['required', 'integer', 'between:1,5'],
+            'title' => ['nullable', 'string', 'max:120'],
+            'comment' => ['required', 'string', 'min:10', 'max:1200'],
+            'reviewer_name' => [$user ? 'nullable' : 'required', 'string', 'max:255'],
+            'reviewer_email' => [$user ? 'nullable' : 'required', 'email', 'max:255'],
+        ]);
+
+        DB::table('reviews')->insert([
+            'user_id' => $user?->id,
+            'product_id' => $productRow->id,
+            'reviewer_name' => $user?->name ?: ($validated['reviewer_name'] ?? null),
+            'reviewer_email' => $user?->email ?: ($validated['reviewer_email'] ?? null),
+            'rating' => (int) $validated['rating'],
+            'title' => $validated['title'] ?? null,
+            'comment' => $validated['comment'],
+            'status' => true,
+            'created_at' => now(),
+        ]);
+
+        return redirect(route('frontend.product', $productRow->slug).'#reviews')
+            ->with('status', 'Cảm ơn bạn đã gửi đánh giá sản phẩm.');
     }
 
     private function productQuery()
@@ -555,6 +600,100 @@ class StorefrontController extends Controller
         );
 
         return $related->concat($moreProducts)->values();
+    }
+
+    private function productReviewData(int $productId): array
+    {
+        if (! Schema::hasTable('reviews')) {
+            return [
+                'reviews' => collect(),
+                'summary' => $this->emptyReviewSummary(),
+            ];
+        }
+
+        $reviews = DB::table('reviews')
+            ->leftJoin('users', 'users.id', '=', 'reviews.user_id')
+            ->where('reviews.product_id', $productId)
+            ->where('reviews.status', true)
+            ->select('reviews.*', 'users.name as user_name')
+            ->orderByDesc('reviews.created_at')
+            ->limit(20)
+            ->get()
+            ->map(function ($review) {
+                $displayName = $review->reviewer_name ?: ($review->user_name ?: 'Khách hàng');
+
+                $review->display_name = $displayName;
+                $review->initials = $this->reviewInitials($displayName);
+                $review->display_date = $review->created_at
+                    ? Carbon::parse($review->created_at)->format('d/m/Y')
+                    : '';
+
+                return $review;
+            });
+
+        $stats = DB::table('reviews')
+            ->where('product_id', $productId)
+            ->where('status', true)
+            ->selectRaw('COUNT(*) as total, COALESCE(AVG(rating), 0) as average')
+            ->first();
+
+        $total = (int) ($stats->total ?? 0);
+        $average = round((float) ($stats->average ?? 0), 1);
+        $counts = DB::table('reviews')
+            ->where('product_id', $productId)
+            ->where('status', true)
+            ->select('rating', DB::raw('COUNT(*) as total'))
+            ->groupBy('rating')
+            ->pluck('total', 'rating');
+
+        $distribution = collect(range(5, 1))
+            ->map(function (int $rating) use ($counts, $total): array {
+                $count = (int) $counts->get($rating, 0);
+
+                return [
+                    'rating' => $rating,
+                    'count' => $count,
+                    'percent' => $total > 0 ? (int) round(($count / $total) * 100) : 0,
+                ];
+            })
+            ->all();
+
+        return [
+            'reviews' => $reviews,
+            'summary' => [
+                'total' => $total,
+                'average' => $average,
+                'average_label' => number_format($average, 1, ',', '.'),
+                'distribution' => $distribution,
+            ],
+        ];
+    }
+
+    private function emptyReviewSummary(): array
+    {
+        return [
+            'total' => 0,
+            'average' => 0.0,
+            'average_label' => '0,0',
+            'distribution' => collect(range(5, 1))
+                ->map(fn (int $rating): array => [
+                    'rating' => $rating,
+                    'count' => 0,
+                    'percent' => 0,
+                ])
+                ->all(),
+        ];
+    }
+
+    private function reviewInitials(string $name): string
+    {
+        $words = collect(preg_split('/\s+/u', trim($name)) ?: [])
+            ->filter()
+            ->take(2)
+            ->map(fn (string $word): string => Str::upper(Str::substr($word, 0, 1)))
+            ->implode('');
+
+        return $words !== '' ? $words : 'KH';
     }
 
     private function decorateProducts(Collection $products): Collection

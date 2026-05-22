@@ -101,6 +101,7 @@ Route::get('/', [StorefrontController::class, 'home'])->name('frontend.home');
 
 Route::get('/shop', [StorefrontController::class, 'shop'])->name('frontend.shop');
 Route::get('/product/{slug?}', [StorefrontController::class, 'product'])->name('frontend.product');
+Route::post('/product/{product}/reviews', [StorefrontController::class, 'storeReview'])->name('frontend.product.reviews.store');
 Route::get('/cart', [StorefrontController::class, 'cart'])->name('frontend.cart');
 Route::post('/cart/items', [StorefrontController::class, 'addToCart'])->name('frontend.cart.store');
 Route::patch('/cart/items/{item}', [StorefrontController::class, 'updateCartItem'])->name('frontend.cart.items.update');

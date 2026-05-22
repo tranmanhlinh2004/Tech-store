@@ -9,7 +9,7 @@
 @section('page_title', $isEdit ? 'Sửa danh mục' : 'Thêm danh mục')
 
 @section('content')
-    <form class="admin-panel" action="{{ $action }}" method="post">
+    <form class="admin-panel" action="{{ $action }}" method="post" enctype="multipart/form-data">
         @csrf
         @if($isEdit)
             @method('PUT')
@@ -39,8 +39,16 @@
             </div>
 
             <div class="admin-field">
-                <label for="image">Ảnh danh mục</label>
-                <input id="image" name="image" value="{{ old('image', $category->image ?? '') }}" placeholder="template/images/...">
+                <label for="image_file">Ảnh danh mục</label>
+                <input type="hidden" name="current_image" value="{{ old('current_image', $category->image ?? '') }}">
+                <input id="image_file" name="image_file" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
+                @if($category?->image)
+                    <div class="admin-current-image">
+                        <img src="{{ asset($category->image) }}" alt="{{ $category->name }}">
+                        <span>{{ $category->image }}</span>
+                    </div>
+                @endif
+                <span class="admin-help">Để trống nếu muốn giữ ảnh hiện tại.</span>
             </div>
 
             <div class="admin-field admin-field--full">

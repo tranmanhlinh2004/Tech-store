@@ -9,7 +9,7 @@
 @section('page_title', $isEdit ? 'Sửa banner' : 'Thêm banner')
 
 @section('content')
-    <form class="admin-panel" action="{{ $action }}" method="post">
+    <form class="admin-panel" action="{{ $action }}" method="post" enctype="multipart/form-data">
         @csrf
         @if($isEdit)
             @method('PUT')
@@ -27,8 +27,16 @@
             </div>
 
             <div class="admin-field admin-field--full">
-                <label for="image">Ảnh banner</label>
-                <input id="image" name="image" value="{{ old('image', $banner->image ?? '') }}" placeholder="template/images/..." required>
+                <label for="image_file">Ảnh banner</label>
+                <input type="hidden" name="current_image" value="{{ old('current_image', $banner->image ?? '') }}">
+                <input id="image_file" name="image_file" type="file" accept="image/png,image/jpeg,image/webp,image/gif" {{ $isEdit ? '' : 'required' }}>
+                @if($banner?->image)
+                    <div class="admin-current-image">
+                        <img src="{{ asset($banner->image) }}" alt="{{ $banner->title }}">
+                        <span>{{ $banner->image }}</span>
+                    </div>
+                @endif
+                <span class="admin-help">Chọn file JPG, PNG, WEBP hoặc GIF từ máy. Khi sửa, để trống để giữ ảnh hiện tại.</span>
             </div>
 
             <div class="admin-field">

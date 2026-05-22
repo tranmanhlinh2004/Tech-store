@@ -19,7 +19,7 @@
     </section>
 
     @if($selectedProduct)
-        <form class="admin-panel" action="{{ route('admin.product-images.update') }}" method="post">
+        <form class="admin-panel" action="{{ route('admin.product-images.update') }}" method="post" enctype="multipart/form-data">
             @csrf
             <input type="hidden" name="product_id" value="{{ $selectedProduct->id }}">
 
@@ -30,15 +30,23 @@
 
             <div class="admin-form-grid">
                 <div class="admin-field admin-field--full">
-                    <label for="thumbnail">Ảnh đại diện</label>
-                    <input id="thumbnail" name="thumbnail" value="{{ old('thumbnail', $selectedProduct->thumbnail ?? '') }}" placeholder="template/images/product/...">
-                    <span class="admin-help">Ảnh đại diện sẽ được đặt là ảnh chính của sản phẩm.</span>
+                    <label for="thumbnail_file">Ảnh đại diện</label>
+                    <input type="hidden" name="current_thumbnail" value="{{ old('current_thumbnail', $selectedProduct->thumbnail ?? '') }}">
+                    <input id="thumbnail_file" name="thumbnail_file" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
+                    @if($selectedProduct->thumbnail)
+                        <div class="admin-current-image">
+                            <img src="{{ asset($selectedProduct->thumbnail) }}" alt="{{ $selectedProduct->name }}">
+                            <span>{{ $selectedProduct->thumbnail }}</span>
+                        </div>
+                    @endif
+                    <span class="admin-help">Chọn file mới nếu muốn thay ảnh đại diện. Để trống để giữ ảnh hiện tại.</span>
                 </div>
 
                 <div class="admin-field admin-field--full">
-                    <label for="image_paths">Ảnh phụ</label>
-                    <textarea id="image_paths" name="image_paths" placeholder="template/images/product/...">{{ old('image_paths', $imagePathText) }}</textarea>
-                    <span class="admin-help">Mỗi dòng một đường dẫn ảnh. Không cần nhập lại ảnh đại diện ở đây.</span>
+                    <label for="image_files">Ảnh phụ</label>
+                    <textarea name="current_image_paths" hidden>{{ old('current_image_paths', $imagePathText) }}</textarea>
+                    <input id="image_files" name="image_files[]" type="file" accept="image/png,image/jpeg,image/webp,image/gif" multiple>
+                    <span class="admin-help">Có thể chọn nhiều file cùng lúc. File mới sẽ được thêm vào danh sách ảnh phụ hiện tại.</span>
                 </div>
             </div>
         </form>
