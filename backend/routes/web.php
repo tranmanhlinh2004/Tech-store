@@ -45,7 +45,7 @@ Route::get('/template/{path}', function (string $path) {
     ]);
 })->where('path', '.*')->name('frontend.asset');
 
-Route::prefix('admin')->name('admin.')->group(function (): void {
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.role'])->group(function (): void {
     Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
 
     Route::get('/products', [AdminController::class, 'products'])->name('products.index');
@@ -54,6 +54,26 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
     Route::get('/products/{id}/edit', [AdminController::class, 'productEdit'])->name('products.edit');
     Route::put('/products/{id}', [AdminController::class, 'productUpdate'])->name('products.update');
     Route::delete('/products/{id}', [AdminController::class, 'productDestroy'])->name('products.destroy');
+
+    Route::get('/product-images', [AdminController::class, 'productImages'])->name('product-images.index');
+    Route::post('/product-images', [AdminController::class, 'productImagesUpdate'])->name('product-images.update');
+
+    Route::get('/product-specifications', [AdminController::class, 'productSpecifications'])->name('product-specifications.index');
+    Route::post('/product-specifications', [AdminController::class, 'productSpecificationsUpdate'])->name('product-specifications.update');
+
+    Route::get('/orders', [AdminController::class, 'orders'])->name('orders.index');
+    Route::patch('/orders/{id}', [AdminController::class, 'orderUpdate'])->name('orders.update');
+
+    Route::get('/coupons', [AdminController::class, 'coupons'])->name('coupons.index');
+    Route::get('/coupons/create', [AdminController::class, 'couponCreate'])->name('coupons.create');
+    Route::post('/coupons', [AdminController::class, 'couponStore'])->name('coupons.store');
+    Route::get('/coupons/{id}/edit', [AdminController::class, 'couponEdit'])->name('coupons.edit');
+    Route::put('/coupons/{id}', [AdminController::class, 'couponUpdate'])->name('coupons.update');
+    Route::delete('/coupons/{id}', [AdminController::class, 'couponDestroy'])->name('coupons.destroy');
+
+    Route::get('/reviews', [AdminController::class, 'reviews'])->name('reviews.index');
+    Route::patch('/reviews/{id}', [AdminController::class, 'reviewUpdate'])->name('reviews.update');
+    Route::delete('/reviews/{id}', [AdminController::class, 'reviewDestroy'])->name('reviews.destroy');
 
     Route::get('/categories', [AdminController::class, 'categories'])->name('categories.index');
     Route::get('/categories/create', [AdminController::class, 'categoryCreate'])->name('categories.create');

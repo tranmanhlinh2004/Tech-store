@@ -14,21 +14,38 @@ class AdminController extends Controller
 {
     public function dashboard()
     {
-        $latestProducts = $this->productBaseQuery()
-            ->orderByDesc('products.updated_at')
-            ->limit(6)
-            ->get();
+        $paidOrders = Schema::hasTable('orders')
+            ? DB::table('orders')
+                ->where('payment_status', 'paid')
+                ->whereNotIn('order_status', ['cancelled', 'returned'])
+            : null;
+
+        $totalRevenue = $paidOrders ? (float) (clone $paidOrders)->sum('total_amount') : 0;
+        $paidOrderCount = $paidOrders ? (int) (clone $paidOrders)->count() : 0;
+        $monthlySales = $this->monthlySales();
 
         return view('admin.dashboard', [
             'stats' => [
-                'products' => $this->countTable('products'),
-                'categories' => $this->countTable('categories'),
-                'brands' => $this->countTable('brands'),
-                'banners' => $this->countTable('banners'),
+                'totalRevenue' => $totalRevenue,
+                'monthRevenue' => $paidOrders
+                    ? (float) (clone $paidOrders)->whereYear('created_at', now()->year)->whereMonth('created_at', now()->month)->sum('total_amount')
+                    : 0,
+                'todayRevenue' => $paidOrders
+                    ? (float) (clone $paidOrders)->whereDate('created_at', today())->sum('total_amount')
+                    : 0,
+                'orders' => $this->countTable('orders'),
+                'pendingOrders' => $this->countTable('orders', fn ($query) => $query->whereIn('order_status', ['pending', 'confirmed', 'processing'])),
+                'paidOrders' => $paidOrderCount,
+                'averageOrder' => $paidOrderCount > 0 ? $totalRevenue / $paidOrderCount : 0,
                 'lowStock' => $this->countTable('products', fn ($query) => $query->where('quantity', '<=', 10)),
-                'featured' => $this->countTable('products', fn ($query) => $query->where('is_featured', true)),
+                'reviews' => $this->countTable('reviews'),
+                'activeCoupons' => $this->countTable('coupons', fn ($query) => $query->where('status', true)),
             ],
-            'latestProducts' => $latestProducts,
+            'monthlySales' => $monthlySales,
+            'maxMonthlyRevenue' => max(1, (float) $monthlySales->max('revenue')),
+            'recentOrders' => $this->recentOrders(),
+            'topProducts' => $this->topSellingProducts(),
+            'recentActivities' => $this->recentActivities(),
         ]);
     }
 
@@ -113,6 +130,258 @@ class AdminController extends Controller
         return redirect()
             ->route('admin.products.index')
             ->with('status', 'Đã xóa sản phẩm.');
+    }
+
+    public function productImages(Request $request)
+    {
+        $products = $this->productBaseQuery()
+            ->orderBy('products.name')
+            ->get();
+
+        $selectedProductId = (int) $request->query('product_id', $products->first()->id ?? 0);
+        $selectedProduct = $products->firstWhere('id', $selectedProductId);
+        $images = $selectedProduct
+            ? DB::table('product_images')->where('product_id', $selectedProductId)->orderBy('sort_order')->get()
+            : collect();
+
+        return view('admin.product-images.index', [
+            'products' => $products,
+            'selectedProduct' => $selectedProduct,
+            'images' => $images,
+            'imagePathText' => $images->where('is_main', false)->pluck('image_path')->implode(PHP_EOL),
+        ]);
+    }
+
+    public function productImagesUpdate(Request $request)
+    {
+        $data = $request->validate([
+            'product_id' => ['required', 'integer', 'exists:products,id'],
+            'thumbnail' => ['nullable', 'string', 'max:255'],
+            'image_paths' => ['nullable', 'string'],
+        ]);
+
+        DB::transaction(function () use ($data, $request): void {
+            DB::table('products')
+                ->where('id', $data['product_id'])
+                ->update([
+                    'thumbnail' => $data['thumbnail'] ?? null,
+                    'updated_at' => now(),
+                ]);
+
+            $this->syncOnlyProductImages((int) $data['product_id'], $data['thumbnail'] ?? null, (string) $request->input('image_paths', ''));
+        });
+
+        return redirect()
+            ->route('admin.product-images.index', ['product_id' => $data['product_id']])
+            ->with('status', 'Đã cập nhật ảnh sản phẩm.');
+    }
+
+    public function productSpecifications(Request $request)
+    {
+        $products = $this->productBaseQuery()
+            ->orderBy('products.name')
+            ->get();
+
+        $selectedProductId = (int) $request->query('product_id', $products->first()->id ?? 0);
+        $selectedProduct = $products->firstWhere('id', $selectedProductId);
+        $specifications = $selectedProduct
+            ? DB::table('product_specifications')->where('product_id', $selectedProductId)->orderBy('sort_order')->get()
+            : collect();
+
+        return view('admin.product-specifications.index', [
+            'products' => $products,
+            'selectedProduct' => $selectedProduct,
+            'specifications' => $specifications,
+            'specificationText' => $specifications
+                ->map(fn ($spec): string => $spec->spec_name.': '.$spec->spec_value)
+                ->implode(PHP_EOL),
+        ]);
+    }
+
+    public function productSpecificationsUpdate(Request $request)
+    {
+        $data = $request->validate([
+            'product_id' => ['required', 'integer', 'exists:products,id'],
+            'specifications' => ['nullable', 'string'],
+        ]);
+
+        DB::transaction(function () use ($data, $request): void {
+            $this->syncOnlyProductSpecifications((int) $data['product_id'], (string) $request->input('specifications', ''));
+            DB::table('products')->where('id', $data['product_id'])->update(['updated_at' => now()]);
+        });
+
+        return redirect()
+            ->route('admin.product-specifications.index', ['product_id' => $data['product_id']])
+            ->with('status', 'Đã cập nhật thông số kỹ thuật.');
+    }
+
+    public function orders(Request $request)
+    {
+        $query = DB::table('orders');
+
+        if ($request->filled('status')) {
+            $query->where('order_status', $request->query('status'));
+        }
+
+        if ($request->filled('payment_status')) {
+            $query->where('payment_status', $request->query('payment_status'));
+        }
+
+        if ($request->filled('q')) {
+            $keyword = '%'.trim((string) $request->query('q')).'%';
+            $query->where(function ($query) use ($keyword): void {
+                $query->where('order_code', 'like', $keyword)
+                    ->orWhere('customer_name', 'like', $keyword)
+                    ->orWhere('customer_phone', 'like', $keyword)
+                    ->orWhere('customer_email', 'like', $keyword);
+            });
+        }
+
+        $orders = $query
+            ->orderByDesc('created_at')
+            ->limit(100)
+            ->get();
+
+        return view('admin.orders.index', [
+            'orders' => $orders,
+            'filters' => [
+                'q' => (string) $request->query('q', ''),
+                'status' => (string) $request->query('status', ''),
+                'payment_status' => (string) $request->query('payment_status', ''),
+            ],
+            'orderStatuses' => $this->orderStatuses(),
+            'paymentStatuses' => $this->paymentStatuses(),
+        ]);
+    }
+
+    public function orderUpdate(Request $request, int $id)
+    {
+        abort_if(! DB::table('orders')->where('id', $id)->exists(), 404);
+
+        $data = $request->validate([
+            'order_status' => ['required', Rule::in(array_keys($this->orderStatuses()))],
+            'payment_status' => ['required', Rule::in(array_keys($this->paymentStatuses()))],
+            'tracking_number' => ['nullable', 'string', 'max:100'],
+        ]);
+
+        DB::table('orders')
+            ->where('id', $id)
+            ->update([
+                ...$data,
+                'updated_at' => now(),
+            ]);
+
+        return redirect()
+            ->route('admin.orders.index', [
+                'q' => $request->input('filter_q'),
+                'status' => $request->input('filter_status'),
+                'payment_status' => $request->input('filter_payment_status'),
+            ])
+            ->with('status', 'Đã cập nhật đơn hàng.');
+    }
+
+    public function coupons()
+    {
+        $coupons = DB::table('coupons')
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('admin.coupons.index', ['coupons' => $coupons]);
+    }
+
+    public function couponCreate()
+    {
+        return view('admin.coupons.form', ['coupon' => null]);
+    }
+
+    public function couponStore(Request $request)
+    {
+        $payload = $this->couponPayload($request);
+        $payload['created_at'] = now();
+
+        $id = DB::table('coupons')->insertGetId($payload);
+
+        return redirect()
+            ->route('admin.coupons.edit', $id)
+            ->with('status', 'Đã thêm mã giảm giá.');
+    }
+
+    public function couponEdit(int $id)
+    {
+        $coupon = DB::table('coupons')->where('id', $id)->first();
+        abort_if(! $coupon, 404);
+
+        return view('admin.coupons.form', ['coupon' => $coupon]);
+    }
+
+    public function couponUpdate(Request $request, int $id)
+    {
+        abort_if(! DB::table('coupons')->where('id', $id)->exists(), 404);
+
+        DB::table('coupons')->where('id', $id)->update($this->couponPayload($request, $id));
+
+        return redirect()
+            ->route('admin.coupons.edit', $id)
+            ->with('status', 'Đã cập nhật mã giảm giá.');
+    }
+
+    public function couponDestroy(int $id)
+    {
+        DB::table('coupons')->where('id', $id)->delete();
+
+        return redirect()
+            ->route('admin.coupons.index')
+            ->with('status', 'Đã xóa mã giảm giá.');
+    }
+
+    public function reviews(Request $request)
+    {
+        $query = DB::table('reviews')
+            ->leftJoin('products', 'products.id', '=', 'reviews.product_id')
+            ->leftJoin('users', 'users.id', '=', 'reviews.user_id')
+            ->select('reviews.*', 'products.name as product_name', 'users.name as user_name');
+
+        if ($request->filled('status')) {
+            $query->where('reviews.status', (bool) $request->query('status'));
+        }
+
+        $reviews = $query
+            ->orderByDesc('reviews.created_at')
+            ->limit(100)
+            ->get();
+
+        return view('admin.reviews.index', [
+            'reviews' => $reviews,
+            'filters' => [
+                'status' => (string) $request->query('status', ''),
+            ],
+        ]);
+    }
+
+    public function reviewUpdate(Request $request, int $id)
+    {
+        abort_if(! DB::table('reviews')->where('id', $id)->exists(), 404);
+
+        $data = $request->validate([
+            'status' => ['required', Rule::in(['0', '1'])],
+        ]);
+
+        DB::table('reviews')->where('id', $id)->update([
+            'status' => (bool) $data['status'],
+        ]);
+
+        return redirect()
+            ->route('admin.reviews.index', $request->only('status'))
+            ->with('status', 'Đã cập nhật đánh giá.');
+    }
+
+    public function reviewDestroy(int $id)
+    {
+        DB::table('reviews')->where('id', $id)->delete();
+
+        return redirect()
+            ->route('admin.reviews.index')
+            ->with('status', 'Đã xóa đánh giá.');
     }
 
     public function categories()
@@ -301,6 +570,260 @@ class AdminController extends Controller
         return redirect()
             ->route('admin.banners.index')
             ->with('status', 'Đã xóa banner.');
+    }
+
+    private function orderStatuses(): array
+    {
+        return [
+            'pending' => 'Chờ xác nhận',
+            'confirmed' => 'Đã xác nhận',
+            'processing' => 'Đang xử lý',
+            'shipping' => 'Đang giao',
+            'shipped' => 'Đã gửi hàng',
+            'delivered' => 'Đã giao',
+            'completed' => 'Hoàn thành',
+            'cancelled' => 'Đã hủy',
+            'returned' => 'Đã trả hàng',
+        ];
+    }
+
+    private function paymentStatuses(): array
+    {
+        return [
+            'unpaid' => 'Chưa thanh toán',
+            'paid' => 'Đã thanh toán',
+            'failed' => 'Thanh toán lỗi',
+            'refunded' => 'Đã hoàn tiền',
+        ];
+    }
+
+    private function couponPayload(Request $request, ?int $ignoreId = null): array
+    {
+        $request->merge([
+            'code' => Str::upper(trim((string) $request->input('code'))),
+        ]);
+
+        $codeRule = Rule::unique('coupons', 'code');
+
+        if ($ignoreId) {
+            $codeRule->ignore($ignoreId);
+        }
+
+        $data = $request->validate([
+            'code' => ['required', 'string', 'max:50', $codeRule],
+            'name' => ['required', 'string', 'max:255'],
+            'discount_type' => ['required', Rule::in(['percentage', 'fixed'])],
+            'discount_value' => ['required', 'numeric', 'min:0'],
+            'min_order_value' => ['nullable', 'numeric', 'min:0'],
+            'max_discount_amount' => ['nullable', 'numeric', 'min:0'],
+            'quantity' => ['required', 'integer', 'min:0'],
+            'used_count' => ['nullable', 'integer', 'min:0'],
+            'start_date' => ['required', 'date'],
+            'end_date' => ['required', 'date', 'after_or_equal:start_date'],
+        ]);
+
+        return [
+            'code' => $data['code'],
+            'name' => $data['name'],
+            'discount_type' => $data['discount_type'],
+            'discount_value' => (float) $data['discount_value'],
+            'min_order_value' => (float) ($data['min_order_value'] ?? 0),
+            'max_discount_amount' => $request->filled('max_discount_amount') ? (float) $data['max_discount_amount'] : null,
+            'quantity' => (int) $data['quantity'],
+            'used_count' => (int) ($data['used_count'] ?? 0),
+            'start_date' => $data['start_date'],
+            'end_date' => $data['end_date'],
+            'status' => $request->boolean('status'),
+        ];
+    }
+
+    private function syncOnlyProductImages(int $productId, ?string $thumbnail, string $imagePathText): void
+    {
+        DB::table('product_images')->where('product_id', $productId)->delete();
+
+        $imageRows = [];
+        $sortOrder = 1;
+
+        if ($thumbnail) {
+            $imageRows[] = [
+                'product_id' => $productId,
+                'image_path' => $thumbnail,
+                'is_main' => true,
+                'sort_order' => $sortOrder++,
+                'created_at' => now(),
+            ];
+        }
+
+        foreach ($this->lines($imagePathText) as $imagePath) {
+            if ($imagePath === $thumbnail) {
+                continue;
+            }
+
+            $imageRows[] = [
+                'product_id' => $productId,
+                'image_path' => $imagePath,
+                'is_main' => false,
+                'sort_order' => $sortOrder++,
+                'created_at' => now(),
+            ];
+        }
+
+        if ($imageRows !== []) {
+            DB::table('product_images')->insert($imageRows);
+        }
+    }
+
+    private function syncOnlyProductSpecifications(int $productId, string $specificationText): void
+    {
+        DB::table('product_specifications')->where('product_id', $productId)->delete();
+
+        $specRows = [];
+        $sortOrder = 1;
+
+        foreach ($this->lines($specificationText) as $line) {
+            [$name, $value] = str_contains($line, ':')
+                ? array_map('trim', explode(':', $line, 2))
+                : ['Thông số', $line];
+
+            if ($name === '' || $value === '') {
+                continue;
+            }
+
+            $specRows[] = [
+                'product_id' => $productId,
+                'spec_name' => $name,
+                'spec_value' => $value,
+                'sort_order' => $sortOrder++,
+            ];
+        }
+
+        if ($specRows !== []) {
+            DB::table('product_specifications')->insert($specRows);
+        }
+    }
+
+    private function monthlySales()
+    {
+        if (! Schema::hasTable('orders')) {
+            return collect();
+        }
+
+        $start = now()->subMonthsNoOverflow(5)->startOfMonth();
+
+        $rows = DB::table('orders')
+            ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as month_key")
+            ->selectRaw('COUNT(*) as order_count')
+            ->selectRaw('SUM(total_amount) as revenue')
+            ->where('payment_status', 'paid')
+            ->whereNotIn('order_status', ['cancelled', 'returned'])
+            ->where('created_at', '>=', $start)
+            ->groupBy('month_key')
+            ->get()
+            ->keyBy('month_key');
+
+        return collect(range(5, 0))->map(function (int $monthsAgo) use ($rows): array {
+            $date = now()->subMonthsNoOverflow($monthsAgo);
+            $key = $date->format('Y-m');
+            $row = $rows->get($key);
+
+            return [
+                'label' => $date->format('m/Y'),
+                'orders' => (int) ($row->order_count ?? 0),
+                'revenue' => (float) ($row->revenue ?? 0),
+            ];
+        });
+    }
+
+    private function recentOrders()
+    {
+        if (! Schema::hasTable('orders')) {
+            return collect();
+        }
+
+        return DB::table('orders')
+            ->select('id', 'order_code', 'customer_name', 'total_amount', 'order_status', 'payment_status', 'created_at')
+            ->orderByDesc('created_at')
+            ->limit(8)
+            ->get();
+    }
+
+    private function topSellingProducts()
+    {
+        if (! Schema::hasTable('order_items') || ! Schema::hasTable('orders')) {
+            return collect();
+        }
+
+        return DB::table('order_items')
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->leftJoin('products', 'products.id', '=', 'order_items.product_id')
+            ->select('order_items.product_id', 'order_items.product_name', 'products.thumbnail')
+            ->selectRaw('SUM(order_items.quantity) as sold_quantity')
+            ->selectRaw('SUM(order_items.total) as revenue')
+            ->where('orders.payment_status', 'paid')
+            ->whereNotIn('orders.order_status', ['cancelled', 'returned'])
+            ->groupBy('order_items.product_id', 'order_items.product_name', 'products.thumbnail')
+            ->orderByDesc('sold_quantity')
+            ->limit(6)
+            ->get();
+    }
+
+    private function recentActivities()
+    {
+        $activities = collect();
+
+        if (Schema::hasTable('orders')) {
+            $activities = $activities->merge(
+                DB::table('orders')
+                    ->select('order_code', 'customer_name', 'total_amount', 'order_status', 'created_at')
+                    ->orderByDesc('created_at')
+                    ->limit(4)
+                    ->get()
+                    ->map(fn ($order): array => [
+                        'icon' => 'fa-receipt',
+                        'title' => 'Đơn hàng '.$order->order_code,
+                        'meta' => $order->customer_name.' · '.$order->order_status.' · '.number_format((float) $order->total_amount, 0, ',', '.').'đ',
+                        'time' => (string) $order->created_at,
+                    ])
+            );
+        }
+
+        if (Schema::hasTable('reviews')) {
+            $activities = $activities->merge(
+                DB::table('reviews')
+                    ->leftJoin('products', 'products.id', '=', 'reviews.product_id')
+                    ->select('reviews.rating', 'reviews.reviewer_name', 'reviews.created_at', 'products.name as product_name')
+                    ->orderByDesc('reviews.created_at')
+                    ->limit(4)
+                    ->get()
+                    ->map(fn ($review): array => [
+                        'icon' => 'fa-star',
+                        'title' => 'Đánh giá '.$review->rating.' sao',
+                        'meta' => ($review->reviewer_name ?: 'Khách hàng').' · '.($review->product_name ?: 'Sản phẩm'),
+                        'time' => (string) $review->created_at,
+                    ])
+            );
+        }
+
+        if (Schema::hasTable('products')) {
+            $activities = $activities->merge(
+                DB::table('products')
+                    ->select('name', 'updated_at')
+                    ->orderByDesc('updated_at')
+                    ->limit(4)
+                    ->get()
+                    ->map(fn ($product): array => [
+                        'icon' => 'fa-box',
+                        'title' => 'Cập nhật sản phẩm',
+                        'meta' => $product->name,
+                        'time' => (string) $product->updated_at,
+                    ])
+            );
+        }
+
+        return $activities
+            ->sortByDesc('time')
+            ->take(8)
+            ->values();
     }
 
     private function productBaseQuery()

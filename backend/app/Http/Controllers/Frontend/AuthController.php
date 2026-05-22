@@ -13,10 +13,17 @@ use Illuminate\View\View;
 
 class AuthController extends Controller
 {
+    private const ADMIN_ROLES = [
+        'admin',
+        'staff',
+        'manage',
+        'manager',
+    ];
+
     public function signin(): RedirectResponse|View
     {
         if (Auth::check()) {
-            return redirect()->route('frontend.dashboard');
+            return redirect()->route($this->redirectRouteForAuthenticatedUser());
         }
 
         return view('frontend.signin');
@@ -25,7 +32,7 @@ class AuthController extends Controller
     public function signup(): RedirectResponse|View
     {
         if (Auth::check()) {
-            return redirect()->route('frontend.dashboard');
+            return redirect()->route($this->redirectRouteForAuthenticatedUser());
         }
 
         return view('frontend.signup');
@@ -45,8 +52,11 @@ class AuthController extends Controller
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
 
-            return redirect()
-                ->intended(route('frontend.dashboard'))
+            $redirectRoute = $this->redirectRouteForAuthenticatedUser();
+
+            return ($redirectRoute === 'admin.dashboard'
+                ? redirect()->route($redirectRoute)
+                : redirect()->intended(route($redirectRoute)))
                 ->with('status', 'Đăng nhập thành công.');
         }
 
@@ -106,5 +116,16 @@ class AuthController extends Controller
         return redirect()
             ->route('frontend.home')
             ->with('status', 'Bạn đã đăng xuất.');
+    }
+
+    private function redirectRouteForAuthenticatedUser(): string
+    {
+        $user = Auth::user();
+
+        if ($user instanceof User && $user->hasAnyRole(self::ADMIN_ROLES)) {
+            return 'admin.dashboard';
+        }
+
+        return 'frontend.dashboard';
     }
 }
