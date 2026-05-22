@@ -71,7 +71,7 @@
         <div class="site-container">
             <div class="section-heading">
                 <span>Ưu đãi nhanh</span>
-                <h2 id="deal-title">Sản phẩm đang giảm giá</h2>
+                <h2 id="deal-title">Sản phẩm đang được giảm giá</h2>
                 <a href="{{ route('frontend.shop', ['sort' => 'price_desc']) }}">Săn deal <i class="fas fa-arrow-right"></i></a>
             </div>
 
