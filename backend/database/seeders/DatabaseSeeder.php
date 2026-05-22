@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
@@ -16,11 +17,21 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::query()->firstOrCreate(
-            ['email' => 'test@example.com'],
+        $adminRoleId = DB::table('roles')->where('name', 'admin')->value('id')
+            ?: DB::table('roles')->insertGetId([
+                'name' => 'admin',
+                'description' => 'System administrator',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+        User::query()->updateOrCreate(
+            ['email' => 'admin@gmail.com'],
             [
-                'name' => 'Test User',
-                'password' => Hash::make('password'),
+                'role_id' => $adminRoleId,
+                'name' => 'Admin User',
+                'phone' => '0900000000',
+                'password' => Hash::make('12345678'),
             ]
         );
 
