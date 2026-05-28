@@ -675,26 +675,26 @@ INSERT INTO `brands` (`id`, `name`, `slug`, `logo`, `description`, `status`, `cr
 --
 
 INSERT INTO `categories` (`id`, `parent_id`, `name`, `slug`, `description`, `image`, `status`, `created_at`, `updated_at`) VALUES
-(1, NULL, 'Laptop', 'laptop', 'Laptop for office, gaming and study.', 'template/images/collection/coll-1.jpg', 1, '2026-05-02 09:00:00', '2026-05-02 09:00:00'),
-(2, NULL, 'Smartphone', 'smartphone', 'Phones and mobile devices.', 'template/images/collection/coll-2.jpg', 1, '2026-05-02 09:02:00', '2026-05-02 09:02:00'),
-(3, NULL, 'Tablet', 'tablet', 'Tablets and stylus devices.', 'template/images/collection/coll-3.jpg', 1, '2026-05-02 09:04:00', '2026-05-02 09:04:00'),
-(4, NULL, 'Audio', 'audio', 'Headphones, speakers and microphones.', 'template/images/collection/coll-4.jpg', 1, '2026-05-02 09:06:00', '2026-05-02 09:06:00'),
-(5, NULL, 'Keyboard', 'keyboard', 'Office and mechanical keyboards.', 'template/images/product/electronic/product1.jpg', 1, '2026-05-02 09:08:00', '2026-05-02 09:08:00'),
-(6, NULL, 'Mouse', 'mouse', 'Office and gaming mouse products.', 'template/images/product/electronic/product2.jpg', 1, '2026-05-02 09:10:00', '2026-05-02 09:10:00'),
-(7, NULL, 'Monitor', 'monitor', 'Monitors for work and gaming.', 'template/images/product/electronic/product3.jpg', 1, '2026-05-02 09:12:00', '2026-05-02 09:12:00'),
-(8, NULL, 'PC Components', 'pc-components', 'RAM, SSD, CPU, GPU and cases.', 'template/images/product/electronic/product4.jpg', 1, '2026-05-02 09:14:00', '2026-05-02 09:14:00'),
-(9, NULL, 'Network', 'network', 'Routers, switches and adapters.', 'template/images/product/electronic/product5.jpg', 1, '2026-05-02 09:16:00', '2026-05-02 09:16:00'),
-(10, NULL, 'Smart Home', 'smart-home', 'Smart cameras, sensors and home devices.', 'template/images/product/electronic/product6.jpg', 1, '2026-05-02 09:18:00', '2026-05-02 09:18:00'),
-(11, 1, 'Gaming Laptop', 'gaming-laptop', 'High performance laptops for gaming.', 'template/images/product/electronic/product7.jpg', 1, '2026-05-02 09:20:00', '2026-05-02 09:20:00'),
-(12, 1, 'Ultrabook', 'ultrabook', 'Thin and light laptops.', 'template/images/product/electronic/product8.jpg', 1, '2026-05-02 09:22:00', '2026-05-02 09:22:00'),
-(13, 2, 'Android Phone', 'android-phone', 'Android smartphones.', 'template/images/product/electronic/product9.jpg', 1, '2026-05-02 09:24:00', '2026-05-02 09:24:00'),
-(14, 2, 'iPhone', 'iphone', 'Apple iPhone models.', 'template/images/product/electronic/product10.jpg', 1, '2026-05-02 09:26:00', '2026-05-02 09:26:00'),
-(15, 4, 'Bluetooth Headphone', 'bluetooth-headphone', 'Wireless headphones and earbuds.', 'template/images/product/electronic/product11.jpg', 1, '2026-05-02 09:28:00', '2026-05-02 09:28:00'),
-(16, 4, 'Speaker', 'speaker', 'Portable and desktop speakers.', 'template/images/product/electronic/product12.jpg', 1, '2026-05-02 09:30:00', '2026-05-02 09:30:00'),
-(17, 5, 'Mechanical Keyboard', 'mechanical-keyboard', 'Mechanical keyboards for gaming and work.', 'template/images/product/electronic/product13.jpg', 1, '2026-05-02 09:32:00', '2026-05-02 09:32:00'),
-(18, 6, 'Gaming Mouse', 'gaming-mouse', 'High DPI gaming mice.', 'template/images/product/electronic/product14.jpg', 1, '2026-05-02 09:34:00', '2026-05-02 09:34:00'),
-(19, 8, 'SSD and RAM', 'ssd-and-ram', 'Storage and memory upgrade parts.', 'template/images/product/electronic/product15.jpg', 1, '2026-05-02 09:36:00', '2026-05-02 09:36:00'),
-(20, 9, 'Router', 'router', 'Wi-Fi routers and mesh systems.', 'template/images/product/electronic/product16.jpg', 1, '2026-05-02 09:38:00', '2026-05-02 09:38:00');
+(1, NULL, 'Laptop', 'laptop', 'Laptop for office, gaming and study.', 'template/images/product/ultrabook/macbook-air-m3-13-inch.jpg', 1, '2026-05-02 09:00:00', '2026-05-02 09:00:00'),
+(2, NULL, 'Smartphone', 'smartphone', 'Phones and mobile devices.', 'template/images/product/android-phone/samsung-galaxy-s24-ultra.jpg', 1, '2026-05-02 09:02:00', '2026-05-02 09:02:00'),
+(3, NULL, 'Tablet', 'tablet', 'Tablets and stylus devices.', 'template/images/product/tablet/ipad-air-m2-11-inch.jpg', 1, '2026-05-02 09:04:00', '2026-05-02 09:04:00'),
+(4, NULL, 'Audio', 'audio', 'Headphones, speakers and microphones.', 'template/images/product/bluetooth-headphone/sony-wh-1000xm5.jpg', 1, '2026-05-02 09:06:00', '2026-05-02 09:06:00'),
+(5, NULL, 'Keyboard', 'keyboard', 'Office and mechanical keyboards.', 'template/images/product/mechanical-keyboard/logitech-mx-keys-s.webp', 1, '2026-05-02 09:08:00', '2026-05-02 09:08:00'),
+(6, NULL, 'Mouse', 'mouse', 'Office and gaming mouse products.', 'template/images/product/gaming-mouse/logitech-g-pro-x-superlight.webp', 1, '2026-05-02 09:10:00', '2026-05-02 09:10:00'),
+(7, NULL, 'Monitor', 'monitor', 'Monitors for work and gaming.', 'template/images/product/monitor/lg-ultragear-27gp850.jpg', 1, '2026-05-02 09:12:00', '2026-05-02 09:12:00'),
+(8, NULL, 'PC Components', 'pc-components', 'RAM, SSD, CPU, GPU and cases.', 'template/images/product/pc-components/gigabyte-rtx-4060-eagle-oc.png', 1, '2026-05-02 09:14:00', '2026-05-02 09:14:00'),
+(9, NULL, 'Network', 'network', 'Routers, switches and adapters.', 'template/images/product/router/tp-link-archer-ax55.jpg', 1, '2026-05-02 09:16:00', '2026-05-02 09:16:00'),
+(10, NULL, 'Smart Home', 'smart-home', 'Smart cameras, sensors and home devices.', 'template/images/product/smart-home/anker-737-power-bank.jpg', 1, '2026-05-02 09:18:00', '2026-05-02 09:18:00'),
+(11, 1, 'Gaming Laptop', 'gaming-laptop', 'High performance laptops for gaming.', 'template/images/product/gaming-laptop/asus-rog-strix-g16.jpg', 1, '2026-05-02 09:20:00', '2026-05-02 09:20:00'),
+(12, 1, 'Ultrabook', 'ultrabook', 'Thin and light laptops.', 'template/images/product/ultrabook/dell-xps-13-plus.jpg', 1, '2026-05-02 09:22:00', '2026-05-02 09:22:00'),
+(13, 2, 'Android Phone', 'android-phone', 'Android smartphones.', 'template/images/product/android-phone/xiaomi-14-5g.jpg', 1, '2026-05-02 09:24:00', '2026-05-02 09:24:00'),
+(14, 2, 'iPhone', 'iphone', 'Apple iPhone models.', 'template/images/product/iphone/iphone-15-pro-256gb.webp', 1, '2026-05-02 09:26:00', '2026-05-02 09:26:00'),
+(15, 4, 'Bluetooth Headphone', 'bluetooth-headphone', 'Wireless headphones and earbuds.', 'template/images/product/bluetooth-headphone/airpods-pro-2-usb-c.jpg', 1, '2026-05-02 09:28:00', '2026-05-02 09:28:00'),
+(16, 4, 'Speaker', 'speaker', 'Portable and desktop speakers.', 'template/images/product/speaker/jbl-charge-5.jpg', 1, '2026-05-02 09:30:00', '2026-05-02 09:30:00'),
+(17, 5, 'Mechanical Keyboard', 'mechanical-keyboard', 'Mechanical keyboards for gaming and work.', 'template/images/product/mechanical-keyboard/razer-blackwidow-v4.jpg', 1, '2026-05-02 09:32:00', '2026-05-02 09:32:00'),
+(18, 6, 'Gaming Mouse', 'gaming-mouse', 'High DPI gaming mice.', 'template/images/product/gaming-mouse/razer-deathadder-v3.jpg', 1, '2026-05-02 09:34:00', '2026-05-02 09:34:00'),
+(19, 8, 'SSD and RAM', 'ssd-and-ram', 'Storage and memory upgrade parts.', 'template/images/product/ssd-and-ram/kingston-nv2-1tb.png', 1, '2026-05-02 09:36:00', '2026-05-02 09:36:00'),
+(20, 9, 'Router', 'router', 'Wi-Fi routers and mesh systems.', 'template/images/product/router/tp-link-deco-x20-2-pack.jpg', 1, '2026-05-02 09:38:00', '2026-05-02 09:38:00');
 
 --
 -- Sample data for table `products`
